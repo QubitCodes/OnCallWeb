@@ -145,15 +145,16 @@ const Header = () => {
     const fetchServices = async () => {
       try {
         setServicesLoading(true);
-        const response = await axios.get('/all-services');
-        const servicesData = response.data.data || response.data || [];
+        // Load data from local services.json instead of making an API call
+        const servicesDataModule = await import('@/data/services.json');
+        const servicesData = servicesDataModule.default || servicesDataModule || [];
         
         // Ensure we have valid service objects
-        const validServices = servicesData.filter((service: Partial<Service>) => 
+        const validServices = Array.isArray(servicesData) ? servicesData.filter((service: Partial<Service>) => 
           service && service.id && service.name && service.slug
-        );
+        ) : [];
         
-        setServices(validServices);
+        setServices(validServices as Service[]);
       } catch (error) {
         console.error('Error fetching services:', error);
         // Use fallback services if API fails

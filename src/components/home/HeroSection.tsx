@@ -16,8 +16,15 @@ interface Service {
 }
 
 interface SearchResults {
-  postcode: string;
-  services: Array<{
+  postcode?: string;
+  data?: Array<{
+    id: string;
+    name: string;
+    description?: string;
+    slug: string;
+    image?: string;
+  }>;
+  services?: Array<{
     service: Service;
     location: {
       name: string;
@@ -33,6 +40,7 @@ interface SearchResults {
     };
     postcode: string;
   }>;
+  length?: number;
 }
 
 const HeroSection = () => {
@@ -213,8 +221,8 @@ const HeroSection = () => {
                     <h1 className="text-anime-style-2" data-cursor="-opaque">
                       Oncall
                       <br />
-                      <h2 style={{color:"white", fontSize:'28px', fontWeight: "500", marginTop:"6px"}}>We care for you</h2>
-                        <h5 style={{ color: "white", fontSize: "22px", fontWeight: "400" , marginTop:"10px"}}>Home Care And Housing Support Service</h5>
+                      <span style={{ display: "block", color:"white", fontSize:'28px', fontWeight: "500", marginTop:"6px"}}>We care for you</span>
+                      <span style={{ display: "block", color: "white", fontSize: "22px", fontWeight: "400" , marginTop:"10px"}}>Home Care And Housing Support Service</span>
                     </h1>
                     <h5 className="text-anime-style-2"></h5>
                   </div>
@@ -474,13 +482,13 @@ const HeroSection = () => {
                   </div>
 
                   {/* Direct Services */}
-                  {searchResults?.data?.length > 0 && (
+                  {searchResults?.data && searchResults.data.length > 0 && (
                     <div style={{ marginBottom: '30px' }}>
                       <h3 style={{ fontSize: '22px', fontWeight: '600', color: '#333', marginBottom: '20px' }}>
                         Direct Services in Your Area
                       </h3>
                       <div className="services-grid" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px' }}>
-                        {searchResults?.data?.map((result, index) => (
+                        {searchResults.data.map((result: any, index: number) => (
                           <div
                             key={index}
                             style={{

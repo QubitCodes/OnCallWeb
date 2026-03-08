@@ -36,64 +36,61 @@ export default function AboutPage() {
       </div>
       {/* Page Header End */}
 
-      {/* About Us Section Start (images + intro) */}
-      <div className="about-us">
+      {/* Our Team Section Start */}
+      <div className="our-team">
         <div className="container">
-          <div className="row align-items-center">
-            <div className="col-lg-6">
-              {/* About Us Images Start */}
-              <div className="about-us-images">
-                {/* About Us Image Start */}
-                <div className="about-image-1">
-                  <figure className="image-anime reveal">
-                    <Image src="/images/about-us-image-1.jpg" alt="about 1" width={520} height={600} />
-                  </figure>
-                </div>
-                {/* About Us Image End */}
-
-                {/* About Us Image Start */}
-                <div className="about-image-2">
-                  <figure className="image-anime reveal">
-                    <Image src="/images/about-us-image-2.jpg" alt="about 2" width={420} height={520} />
-                  </figure>
-                </div>
-                {/* About Us Image End */}
+          <div className="row section-row">
+            <div className="col-lg-12">
+              <div className="section-title section-title-center">
+                <h3 className="wow fadeInUp">Expert team member</h3>
+                <h2 className="text-anime-style-2" data-cursor="-opaque">Meet the compassionate hearts <span>behind our care</span></h2>
               </div>
-              {/* About Us Images End */}
             </div>
+          </div>
 
-            <div className="col-lg-6">
-              {/* About Us Content Start */}
-              <div className="about-us-content">
-                {/* Section Title Start */}
-                <div className="section-title">
-                  <h3 className="wow fadeInUp">About On Call</h3>
-                  <h2 className="text-anime-style-2" data-cursor="-opaque">
-                    Care at <span>home</span> with dignity and independence
-                  </h2>
-                  <p className="wow fadeInUp" data-wow-delay="0.2s">
-                    We&apos;re a team of care professionals dedicated to helping people live well at home. From everyday support to specialised assistance, we build relationships, earn trust, and tailor care around each person&apos;s goals and routine.
-                  </p>
+          <div className="row">
+            {[
+              { img: '/images/team_members/nisha_soman_managing_director.jpg', name: 'Nisha Soman', role: 'Managing Director', delay: '0s' },
+              { img: '/images/team_members/lancy_nalinakshan_deputy_manager.jpg', name: 'Lancy Nalinakshan', role: 'Deputy Manager', delay: '0.2s' },
+              { img: '/images/team_members/teena_thomas_office_manager.jpg', name: 'Teena Thomas', role: 'Office Manager', delay: '0.4s' },
+              { img: '/images/team_members/arun_suresh_care_coordinator.jpg', name: 'Arun Suresh', role: 'Care Coordinator', delay: '0.6s' },
+              { img: '/images/team_members/bency_eldho_care_coordinator.jpg', name: 'Bency Eldho', role: 'Care Coordinator', delay: '0.8s' },
+              { img: '/images/team_members/harikrishnan_madhukumar_care_coordinator.jpg', name: 'Harikrishnan Madhukumar', role: 'Care Coordinator', delay: '1.0s' },
+            ].map((t, i) => (
+              <div className="col-lg-4 col-md-6 mb-4" key={i}>
+                <div className="team-item wow fadeInUp" data-wow-delay={t.delay}>
+                  <div className="team-image">
+                    {/* <Link href="/team-single" data-cursor-text="View"> */}
+                    <figure>
+                      <Image 
+                        src={t.img} 
+                        alt={t.name} 
+                        width={400} 
+                        height={460} 
+                        style={{ width: '100%', height: '100%', aspectRatio: '1 / 1.153', objectFit: 'cover', objectPosition: 'top' }} 
+                      />
+                    </figure>
+                    {/* </Link> */}
+                    {/* <div className="team-social-icon">
+                      <ul>
+                        <li><a href="#"><i className="fa-brands fa-x-twitter"></i></a></li>
+                        <li><a href="#"><i className="fa-brands fa-facebook-f"></i></a></li>
+                        <li><a href="#"><i className="fa-brands fa-instagram"></i></a></li>
+                        <li><a href="#"><i className="fa-brands fa-dribbble"></i></a></li>
+                      </ul>
+                    </div> */}
+                  </div>
+                  <div className="team-content">
+                    <h3>{t.name}</h3>
+                    <p>{t.role}</p>
+                  </div>
                 </div>
-                {/* Section Title End */}
-
-                {/* About Us List Start */}
-                <div className="about-us-list wow fadeInUp" data-wow-delay="0.4s">
-                  <ul>
-                    <li>Our mission: person‑centred care that respects choice</li>
-                    <li>Vetted, trained and supported care professionals</li>
-                    <li>Personalised plans shaped around daily life</li>
-                    <li>Reliable, responsive support for families</li>
-                  </ul>
-                </div>
-                {/* About Us List End */}
               </div>
-              {/* About Us Content End */}
-            </div>
+            ))}
           </div>
         </div>
       </div>
-      {/* About Us Section End */}
+      {/* Our Team Section End */}
 
       {/* Our Story & Values Section Start */}
       <div className="our-approach bg-section">
@@ -192,6 +189,71 @@ export default function AboutPage() {
       </div>
       {/* Our Story & Values Section End */}
 
+      {/* About Us Section Start (images + intro) */}
+      <div className="about-us">
+        <div className="container">
+          <div className="row align-items-center">
+            <div className="col-lg-6">
+              {/* About Us Images Start */}
+              <div className="about-us-images">
+                {/* About Us Image Start */}
+                <div className="about-image-1">
+                  <figure className="image-anime reveal">
+                    <Image src="/images/about-us-image-1.jpg" alt="about 1" width={520} height={600} />
+                  </figure>
+                </div>
+                {/* About Us Image End */}
+
+                {/* About Us Image Start */}
+                <div className="about-image-2">
+                  <figure className="image-anime reveal">
+                    <Image src="/images/about-us-image-2.jpg" alt="about 2" width={420} height={520} />
+                  </figure>
+                </div>
+                {/* About Us Image End */}
+              </div>
+              {/* About Us Images End */}
+            </div>
+
+            <div className="col-lg-6">
+              {/* About Us Content Start */}
+              <div className="about-us-content">
+                {/* Section Title Start */}
+                <div className="section-title">
+                  <h3 className="wow fadeInUp">About On Call</h3>
+                  <h2 className="text-anime-style-2" data-cursor="-opaque">
+                    Care at <span>home</span> with dignity and independence
+                  </h2>
+                  <p className="wow fadeInUp" data-wow-delay="0.2s">
+                    We&apos;re a team of care professionals dedicated to helping people live well at home. From everyday support to specialised assistance, we build relationships, earn trust, and tailor care around each person&apos;s goals and routine.
+                  </p>
+                </div>
+                {/* Section Title End */}
+
+                {/* About Us List Start */}
+                <div className="about-us-list wow fadeInUp" data-wow-delay="0.4s">
+                  <ul>
+                    <li>Our mission: person‑centred care that respects choice</li>
+                    <li>Vetted, trained and supported care professionals</li>
+                    <li>Personalised plans shaped around daily life</li>
+                    <li>Reliable, responsive support for families</li>
+                  </ul>
+                </div>
+                {/* About Us List End */}
+              </div>
+              {/* About Us Content End */}
+            </div>
+          </div>
+        </div>
+      </div>
+      {/* About Us Section End */}
+
+      {/* How It Work Section */}
+      <HowItWorkSection />
+
+      {/* Our Facts Section */}
+      {/* <OurFactsSection /> */}
+
       {/* Our Care Section Start */}
       <div className="our-care">
         <div className="container">
@@ -266,11 +328,8 @@ export default function AboutPage() {
       </div>
       {/* Our Care Section End */}
 
-      {/* How It Work Section */}
-      <HowItWorkSection />
-
-      {/* Our Facts Section */}
-      {/* <OurFactsSection /> */}
+      {/* CTA Section */}
+      <CTASection />
 
       {/* Family Trust Us Section Start */}
       <div className="family-trust-us">
@@ -339,60 +398,7 @@ export default function AboutPage() {
         </div>
       </div>
       {/* Family Trust Us Section End */}
-      {/* CTA Section */}
-      <CTASection />
 
-
-      {/* Our Feature Section */}
-      {/* <OurFeatureSection /> */}
-
-      {/* Our Team Section Start */}
-      {/* <div className="our-team">
-        <div className="container">
-          <div className="row section-row">
-            <div className="col-lg-12">
-              <div className="section-title section-title-center">
-                <h3 className="wow fadeInUp">Expert team member</h3>
-                <h2 className="text-anime-style-2" data-cursor="-opaque">Meet the compassionate hearts <span>behind our care</span></h2>
-              </div>
-            </div>
-          </div>
-
-          <div className="row">
-            {[
-              { img: '/images/team-1.jpg', name: 'Brooklyn Simmons', role: 'Seniors Nursing', delay: '0s' },
-              { img: '/images/team-2.jpg', name: 'Cameron Williamson', role: 'Senior Counselor', delay: '0.2s' },
-              { img: '/images/team-3.jpg', name: 'Leslie Alexander', role: 'Seniors Nursing', delay: '0.4s' },
-              { img: '/images/team-4.jpg', name: 'Darlene Robertson', role: 'Seniors Nursing', delay: '0.6s' },
-            ].map((t, i) => (
-              <div className="col-lg-3 col-md-6" key={i}>
-                <div className="team-item wow fadeInUp" data-wow-delay={t.delay}>
-                  <div className="team-image">
-                    <Link href="/team-single" data-cursor-text="View">
-                      <figure>
-                        <Image src={t.img} alt={t.name} width={300} height={360} />
-                      </figure>
-                    </Link>
-                    <div className="team-social-icon">
-                      <ul>
-                        <li><a href="#"><i className="fa-brands fa-x-twitter"></i></a></li>
-                        <li><a href="#"><i className="fa-brands fa-facebook-f"></i></a></li>
-                        <li><a href="#"><i className="fa-brands fa-instagram"></i></a></li>
-                        <li><a href="#"><i className="fa-brands fa-dribbble"></i></a></li>
-                      </ul>
-                    </div>
-                  </div>
-                  <div className="team-content">
-                    <h3><Link href="/team-single">{t.name}</Link></h3>
-                    <p>{t.role}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div> */}
-      {/* Our Team Section End */}
 
       {/* Our Testimonials Section */}
       {/* <div className="our-testimonials bg-section dark-section parallaxie">
