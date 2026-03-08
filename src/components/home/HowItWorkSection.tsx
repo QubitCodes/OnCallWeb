@@ -11,7 +11,7 @@ const HowItWorkSection = () => {
       title: 'Free Consultation & Assessment',
       description: 'We carefully match you with a caregiver or nurse who fits',
       delay: '0s',
-      active: true
+      active: false
     },
     {
       id: 2,
