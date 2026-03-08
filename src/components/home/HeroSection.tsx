@@ -17,6 +17,7 @@ interface Service {
 
 interface SearchResults {
   postcode?: string;
+  zipcode?: string;
   data?: Array<{
     id: string;
     name: string;
@@ -131,73 +132,73 @@ const HeroSection = () => {
   // computed styles to switch layout on small screens
   const searchBoxInnerStyle: React.CSSProperties = isMobile
     ? {
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '10px',
-        padding: '16px',
-        backgroundColor: 'rgba(255, 255, 255, 0.1)',
-        borderRadius: '12px',
-        backdropFilter: 'blur(8px)',
-        border: '1px solid rgba(255, 255, 255, 0.2)'
-      }
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '10px',
+      padding: '16px',
+      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+      borderRadius: '12px',
+      backdropFilter: 'blur(8px)',
+      border: '1px solid rgba(255, 255, 255, 0.2)'
+    }
     : {
-        display: 'flex',
-        gap: '10px',
-        padding: '20px',
-        backgroundColor: 'rgba(255, 255, 255, 0.1)',
-        borderRadius: '15px',
-        backdropFilter: 'blur(10px)',
-        border: '1px solid rgba(255, 255, 255, 0.2)'
-      };
+      display: 'flex',
+      gap: '10px',
+      padding: '20px',
+      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+      borderRadius: '15px',
+      backdropFilter: 'blur(10px)',
+      border: '1px solid rgba(255, 255, 255, 0.2)'
+    };
 
   const inputStyle: React.CSSProperties = isMobile
     ? {
-        width: '100%',
-        padding: '12px 16px',
-        border: '2px solid rgba(255, 255, 255, 0.3)',
-        borderRadius: '10px',
-        fontSize: '16px',
-        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-        color: '#333',
-        outline: 'none'
-      }
+      width: '100%',
+      padding: '12px 16px',
+      border: '2px solid rgba(255, 255, 255, 0.3)',
+      borderRadius: '10px',
+      fontSize: '16px',
+      backgroundColor: 'rgba(255, 255, 255, 0.9)',
+      color: '#333',
+      outline: 'none'
+    }
     : {
-        flex: 1,
-        padding: '12px 16px',
-        border: '2px solid rgba(255, 255, 255, 0.3)',
-        borderRadius: '10px',
-        fontSize: '16px',
-        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-        color: '#333',
-        outline: 'none'
-      };
+      flex: 1,
+      padding: '12px 16px',
+      border: '2px solid rgba(255, 255, 255, 0.3)',
+      borderRadius: '10px',
+      fontSize: '16px',
+      backgroundColor: 'rgba(255, 255, 255, 0.9)',
+      color: '#333',
+      outline: 'none'
+    };
 
   const buttonStyle: React.CSSProperties = isMobile
     ? {
-        width: '100%',
-        padding: '12px 16px',
-        backgroundColor: '#46bdec',
-        color: 'white',
-        border: 'none',
-        borderRadius: '10px',
-        fontSize: '16px',
-        fontWeight: '600',
-        cursor: isSearching ? 'not-allowed' : 'pointer',
-        opacity: isSearching ? 0.7 : 1,
-        transition: 'all 0.3s ease'
-      }
+      width: '100%',
+      padding: '12px 16px',
+      backgroundColor: '#46bdec',
+      color: 'white',
+      border: 'none',
+      borderRadius: '10px',
+      fontSize: '16px',
+      fontWeight: '600',
+      cursor: isSearching ? 'not-allowed' : 'pointer',
+      opacity: isSearching ? 0.7 : 1,
+      transition: 'all 0.3s ease'
+    }
     : {
-        padding: '12px 24px',
-        backgroundColor: '#46bdec',
-        color: 'white',
-        border: 'none',
-        borderRadius: '10px',
-        fontSize: '16px',
-        fontWeight: '600',
-        cursor: isSearching ? 'not-allowed' : 'pointer',
-        opacity: isSearching ? 0.7 : 1,
-        transition: 'all 0.3s ease'
-      };
+      padding: '12px 24px',
+      backgroundColor: '#46bdec',
+      color: 'white',
+      border: 'none',
+      borderRadius: '10px',
+      fontSize: '16px',
+      fontWeight: '600',
+      cursor: isSearching ? 'not-allowed' : 'pointer',
+      opacity: isSearching ? 0.7 : 1,
+      transition: 'all 0.3s ease'
+    };
 
   const closeResults = () => {
     setShowResults(false);
@@ -221,8 +222,8 @@ const HeroSection = () => {
                     <h1 className="text-anime-style-2" data-cursor="-opaque">
                       Oncall
                       <br />
-                      <span style={{ display: "block", color:"white", fontSize:'28px', fontWeight: "500", marginTop:"6px"}}>We care for you</span>
-                      <span style={{ display: "block", color: "white", fontSize: "22px", fontWeight: "400" , marginTop:"10px"}}>Home Care And Housing Support Service</span>
+                      <span style={{ display: "block", color: "white", fontSize: '28px', fontWeight: "500", marginTop: "6px" }}>We care for you</span>
+                      <span style={{ display: "block", color: "white", fontSize: "22px", fontWeight: "400", marginTop: "10px" }}>Home Care And Housing Support Service</span>
                     </h1>
                     <h5 className="text-anime-style-2"></h5>
                   </div>
@@ -287,124 +288,124 @@ const HeroSection = () => {
                   {/* Working Hours Item Start */}
                   <div className="working-hour-wrap" style={{ display: 'flex', flexDirection: 'column', gap: '20px', minWidth: 'calc(45% - 15px)' }}>
 
-                  {/* Rating Section */}
-                  <div 
-                    className="wow fadeInUp" 
-                    data-wow-delay="0.4s"
-                    style={{
-                      backgroundColor: 'white',
-                      borderRadius: '15px',
-                      padding: '25px',
-                      color: '#333',
-                      minWidth: '280px',
-                      border: '2px solid #e0e0e0',
-                      textAlign: 'center',
-                      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
-                    }}
-                  >
-                    {/* homecare.co.uk logo and branding */}
-                    <div style={{ marginBottom: '20px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '8px' }}>
-                        <Image
-                          src="https://www.homecare.co.uk/assets/images/theme/logo.svg"
-                          alt="homecare.co.uk"
-                          width={220}
-                          height={40}
-                          style={{ objectFit: 'contain' }}
-                        />
+                    {/* Rating Section */}
+                    <div
+                      className="wow fadeInUp"
+                      data-wow-delay="0.4s"
+                      style={{
+                        backgroundColor: 'white',
+                        borderRadius: '15px',
+                        padding: '25px',
+                        color: '#333',
+                        minWidth: '280px',
+                        border: '2px solid #e0e0e0',
+                        textAlign: 'center',
+                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+                      }}
+                    >
+                      {/* homecare.co.uk logo and branding */}
+                      <div style={{ marginBottom: '20px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '8px' }}>
+                          <Image
+                            src="https://www.homecare.co.uk/assets/images/theme/logo.svg"
+                            alt="homecare.co.uk"
+                            width={220}
+                            height={40}
+                            style={{ objectFit: 'contain' }}
+                          />
+                        </div>
+                        <p style={{
+                          margin: 0,
+                          fontSize: '14px',
+                          color: '#888',
+                          fontWeight: '400'
+                        }}>
+                          the leading home care review website <br />
+                        </p>
                       </div>
-                      <p style={{ 
-                        margin: 0, 
-                        fontSize: '14px', 
-                        color: '#888',
-                        fontWeight: '400'
-                      }}>
-                        the leading home care review website <br />
-                      </p>
-                    </div>
 
-                    {/* <hr style={{ 
+                      {/* <hr style={{ 
                       border: 'none', 
                       borderTop: '1px solid #e0e0e0', 
                       margin: '5px 0' 
                     }} /> */}
 
-                    {/* Review section */}
-                    <div style={{ marginBottom: '20px' }}>
-                      <h3 style={{ 
-                        fontSize: '20px', 
-                        fontWeight: 'bold', 
-                        marginBottom: '10px',
-                        color: '#333'
-                      }}>
-                        Review Oncall Care Service Ltd
-                      </h3>
+                      {/* Review section */}
+                      <div style={{ marginBottom: '20px' }}>
+                        <h3 style={{
+                          fontSize: '20px',
+                          fontWeight: 'bold',
+                          marginBottom: '10px',
+                          color: '#333'
+                        }}>
+                          Review Oncall Care Service Ltd
+                        </h3>
+                      </div>
+
+                      {/* Write a Review button */}
+                      <a
+                        href="https://www.homecare.co.uk/review-submit/65432243659"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          display: 'inline-block',
+                          backgroundColor: '#46bdec',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '10px',
+                          padding: '12px 24px',
+                          fontSize: '16px',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          transition: 'all 0.3s ease',
+                          boxShadow: '0 2px 8px rgba(125, 211, 192, 0.3)',
+                          textDecoration: 'none'
+                        }}
+                        onMouseOver={(e) => {
+                          e.currentTarget.style.backgroundColor = '#46bdec';
+                          e.currentTarget.style.transform = 'translateY(-2px)';
+                        }}
+                        onMouseOut={(e) => {
+                          e.currentTarget.style.backgroundColor = '#46bdec';
+                          e.currentTarget.style.transform = 'translateY(0)';
+                        }}
+                      >
+                        Write a Review
+                      </a>
                     </div>
 
-                    {/* Write a Review button */}
-                    <a 
-                      href="https://www.homecare.co.uk/review-submit/65432243659"
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    {/* Working Hours Section */}
+                    <div
+                      className="wow fadeInUp"
+                      data-wow-delay="0.6s"
                       style={{
-                        display: 'inline-block',
                         backgroundColor: '#46bdec',
+                        borderRadius: '15px',
+                        padding: '25px',
                         color: 'white',
-                        border: 'none',
-                        borderRadius: '10px',
-                        padding: '12px 24px',
-                        fontSize: '16px',
-                        fontWeight: '600',
-                        cursor: 'pointer',
-                        transition: 'all 0.3s ease',
-                        boxShadow: '0 2px 8px rgba(125, 211, 192, 0.3)',
-                        textDecoration: 'none'
-                      }}
-                      onMouseOver={(e) => {
-                        e.currentTarget.style.backgroundColor = '#46bdec';
-                        e.currentTarget.style.transform = 'translateY(-2px)';
-                      }}
-                      onMouseOut={(e) => {
-                        e.currentTarget.style.backgroundColor = '#46bdec';
-                        e.currentTarget.style.transform = 'translateY(0)';
+                        minWidth: '280px'
                       }}
                     >
-                      Write a Review
-                    </a>
-                  </div>
-
-                  {/* Working Hours Section */}
-                  <div 
-                    className="wow fadeInUp" 
-                    data-wow-delay="0.6s"
-                    style={{
-                      backgroundColor: '#46bdec',
-                      borderRadius: '15px',
-                      padding: '25px',
-                      color: 'white',
-                      minWidth: '280px'
-                    }}
-                  >
-                    <h3 style={{ 
-                      fontSize: '18px', 
-                      fontWeight: 'bold', 
-                      marginBottom: '15px',
-                      color: 'white'
-                    }}>
-                      Working Hours
-                    </h3>
-                    <div style={{ fontSize: '14px', lineHeight: '1.6' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                        <span>Monday - Friday</span>
-                        <span>9:00 AM - 5:00 PM</span>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span>Saturday - Sunday</span>
-                        <span>Closed</span>
+                      <h3 style={{
+                        fontSize: '18px',
+                        fontWeight: 'bold',
+                        marginBottom: '15px',
+                        color: 'white'
+                      }}>
+                        Working Hours
+                      </h3>
+                      <div style={{ fontSize: '14px', lineHeight: '1.6' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                          <span>Monday - Friday</span>
+                          <span>9:00 AM - 5:00 PM</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span>Saturday - Sunday</span>
+                          <span>Closed</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  
+
                   </div>
                   {/* Working Hours Item End */}
                 </div>
@@ -477,18 +478,18 @@ const HeroSection = () => {
                       Available Services for {searchResults?.zipcode}
                     </h2>
                     <p style={{ color: '#666', fontSize: '16px' }}>
-                      {searchResults?.data?.length + (searchResults?.length || 0)} services found in your area
+                      {(searchResults?.data?.length || 0) + (searchResults?.length || 0)} services found in your area
                     </p>
                   </div>
 
                   {/* Direct Services */}
-                  {searchResults?.data && searchResults.data.length > 0 && (
+                  {(searchResults?.data?.length ?? 0) > 0 && (
                     <div style={{ marginBottom: '30px' }}>
                       <h3 style={{ fontSize: '22px', fontWeight: '600', color: '#333', marginBottom: '20px' }}>
                         Direct Services in Your Area
                       </h3>
                       <div className="services-grid" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px' }}>
-                        {searchResults.data.map((result: any, index: number) => (
+                        {searchResults?.data?.map((result: any, index: number) => (
                           <div
                             key={index}
                             style={{
@@ -699,7 +700,7 @@ const HeroSection = () => {
                   opacity: 1;
                 }
               `}</style>
-              
+
               <div className="logos-track">
                 {/* First set of logos */}
                 <div className="logo-item">
@@ -717,7 +718,7 @@ const HeroSection = () => {
                 <div className="logo-item">
                   <Image src="/images/client/slc.png" alt="SLC Logo" width={120} height={60} />
                 </div>
-                
+
                 {/* Duplicate set for seamless infinite loop */}
                 <div className="logo-item">
                   <Image src="/images/client/care-inspectorate.jpg" alt="Care Inspectorate Logo" width={120} height={60} />
