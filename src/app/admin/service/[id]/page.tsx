@@ -180,8 +180,21 @@ const ServiceDetailsPage = () => {
         p.postcode !== 'null' && 
         p.postcode !== 'NULL'
       );
+
+      // Extract outward codes using rigorous Regex and deduplicate
+      const outwardMap = new Map<string, PostcodeData>();
+      validPostcodes.forEach((p: PostcodeData) => {
+        const normalized = p.postcode.replace(/\s+/g, '').toUpperCase();
+        const fullMatch = normalized.match(/^([A-Z]{1,2}[0-9][A-Z0-9]?)\s*([0-9][A-Z]{2})$/);
+        const outward = fullMatch ? fullMatch[1] : normalized;
+        
+        if (!outwardMap.has(outward)) {
+           outwardMap.set(outward, { ...p, postcode: outward });
+        }
+      });
+      const uniqueOutwardPostcodes = Array.from(outwardMap.values()).sort((a, b) => a.postcode.localeCompare(b.postcode));
       
-      setAvailablePostcodes(validPostcodes);
+      setAvailablePostcodes(uniqueOutwardPostcodes);
       setIsLocationModalOpen(true);
     } catch (error) {
       console.error('Failed to fetch postcodes:', error);
@@ -687,7 +700,7 @@ const ServiceDetailsPage = () => {
               {availablePostcodes.length > 0 ? (
                 <div className={styles.modalPostcodesSection}>
                   <h4 className={styles.modalPostcodesTitle}>
-                    Available Postcodes ({availablePostcodes.length})
+                    Available Postcode Groups ({availablePostcodes.length})
                   </h4>
                   <div className={styles.modalPostcodesContainer}>
                     <div className={styles.modalPostcodesGrid}>

@@ -154,12 +154,17 @@ const CustomerServiceSearch: React.FC = () => {
           ) : (
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
               <h4 className="font-medium text-yellow-800 mb-1">
-                No services available
+                We haven't started here yet
               </h4>
-              <p className="text-yellow-700 text-sm">
-                No services are currently available for postcode {results.postcode}. 
-                Try searching with a different postcode or contact us directly.
+              <p className="text-yellow-700 text-sm mb-4">
+                We are currently expanding! We don't have services in {results.postcode} right now. Contact us to let us know you're interested!
               </p>
+              <a
+                href="/contact"
+                className="inline-block px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-semibold hover:bg-blue-700 transition"
+              >
+                Contact Us
+              </a>
             </div>
           )}
         </div>

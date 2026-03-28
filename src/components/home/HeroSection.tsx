@@ -51,6 +51,20 @@ const HeroSection = () => {
   const [searchError, setSearchError] = useState<string | null>(null);
   const [showResults, setShowResults] = useState(false);
 
+  useEffect(() => {
+    if (showResults) {
+      document.body.style.setProperty('overflow', 'hidden', 'important');
+      document.documentElement.style.setProperty('overflow', 'hidden', 'important');
+    } else {
+      document.body.style.removeProperty('overflow');
+      document.documentElement.style.removeProperty('overflow');
+    }
+    return () => {
+      document.body.style.removeProperty('overflow');
+      document.documentElement.style.removeProperty('overflow');
+    };
+  }, [showResults]);
+
   const handleSearch = async () => {
     if (!zipcode.trim()) {
       setSearchError('Please enter a postcode');
@@ -446,42 +460,115 @@ const HeroSection = () => {
                   style={{
                     backgroundColor: 'white',
                     borderRadius: '20px',
-                    padding: '30px',
                     maxWidth: '800px',
                     width: '100%',
-                    maxHeight: '80vh',
-                    overflowY: 'auto',
-                    position: 'relative'
+                    maxHeight: '85vh',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    position: 'relative',
+                    overflow: 'hidden'
                   }}
                   onClick={(e) => e.stopPropagation()}
                 >
-                  {/* Close Button */}
-                  <button
-                    onClick={closeResults}
-                    style={{
-                      position: 'absolute',
-                      top: '15px',
-                      right: '20px',
-                      background: 'none',
-                      border: 'none',
-                      fontSize: '24px',
-                      cursor: 'pointer',
-                      color: '#666'
-                    }}
-                  >
-                    ×
-                  </button>
+                  {/* STICKY HEADER AREA */}
+                  <div style={{ 
+                    padding: '25px 30px', 
+                    borderBottom: '1px solid #eee', 
+                    backgroundColor: '#fff', 
+                    zIndex: 10,
+                    flexShrink: 0,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '15px'
+                  }}>
+                    {/* Top Row: Title & Close Button */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <div>
+                        <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#333', marginBottom: '5px' }}>
+                          Available Services
+                        </h2>
+                        {((searchResults?.data?.length || 0) + (searchResults?.nearby?.length || 0)) > 0 && (
+                          <p style={{ color: '#666', fontSize: '15px', margin: 0 }}>
+                            {(searchResults?.data?.length || 0) + (searchResults?.nearby?.length || 0)} services found for <strong>{searchResults?.postcode}</strong>
+                          </p>
+                        )}
+                      </div>
+                      <button
+                        onClick={closeResults}
+                        style={{
+                          background: '#f1f1f1',
+                          border: 'none',
+                          fontSize: '20px',
+                          cursor: 'pointer',
+                          color: '#333',
+                          width: '36px',
+                          height: '36px',
+                          borderRadius: '50%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          transition: 'background 0.2s',
+                          flexShrink: 0
+                        }}
+                      >
+                        ×
+                      </button>
+                    </div>
 
-                  {/* Results Header */}
-                  <div style={{ marginBottom: '25px' }}>
-                    <h2 style={{ fontSize: '28px', fontWeight: 'bold', color: '#333', marginBottom: '10px' }}>
-                      Available Services for {searchResults?.zipcode}
-                    </h2>
-                    <p style={{ color: '#666', fontSize: '16px' }}>
-                      {(searchResults?.data?.length || 0) + (searchResults?.length || 0)} services found in your area
-                    </p>
+                    {/* Inline Search Bar */}
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <input
+                        type="text"
+                        value={zipcode}
+                        onChange={(e) => setZipcode(e.target.value)}
+                        onKeyPress={handleKeyPress}
+                        placeholder="Change postcode (e.g., M1 1AA)"
+                        style={{
+                          flex: 1,
+                          padding: '10px 15px',
+                          border: '1px solid #ddd',
+                          borderRadius: '8px',
+                          fontSize: '15px',
+                          outline: 'none',
+                          color: '#333',
+                          backgroundColor: '#fff'
+                        }}
+                      />
+                      <button 
+                        onClick={handleSearch} 
+                        disabled={isSearching} 
+                        style={{
+                          padding: '10px 20px',
+                          backgroundColor: '#46bdec',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '8px',
+                          fontSize: '15px',
+                          fontWeight: '600',
+                          cursor: isSearching ? 'not-allowed' : 'pointer',
+                          opacity: isSearching ? 0.7 : 1,
+                          whiteSpace: 'nowrap'
+                        }}
+                      >
+                        {isSearching ? '...' : 'Search'}
+                      </button>
+                    </div>
+
+                    {/* Search Error inside modal */}
+                    {searchError && (
+                      <div style={{ color: '#d63384', fontSize: '14px', marginTop: '-5px' }}>
+                        {searchError}
+                      </div>
+                    )}
                   </div>
 
+                  {/* SCROLLABLE CONTENT AREA */}
+                  <div style={{ 
+                    padding: '25px 30px', 
+                    overflowY: 'auto', 
+                    flex: 1, 
+                    backgroundColor: '#fafafa' 
+                  }}>
                   {/* Direct Services */}
                   {(searchResults?.data?.length ?? 0) > 0 && (
                     <div style={{ marginBottom: '30px' }}>
@@ -520,6 +607,8 @@ const HeroSection = () => {
                                 )}
                                 <Link
                                   href={`/services/${result?.slug}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
                                   style={{
                                     display: 'inline-block',
                                     marginTop: '12px',
@@ -587,6 +676,8 @@ const HeroSection = () => {
                                 </div>
                                 <Link
                                   href={`/services/${result.service.slug}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
                                   style={{
                                     display: 'inline-block',
                                     marginTop: '12px',
@@ -610,14 +701,14 @@ const HeroSection = () => {
                   )}
 
                   {/* No Services Found */}
-                  {searchResults?.services?.length === 0 && (!searchResults?.nearby || searchResults?.nearby?.length === 0) && (
+                  {((!searchResults?.data || searchResults.data.length === 0) && (!searchResults?.nearby || searchResults.nearby.length === 0)) && (
                     <div style={{ textAlign: 'center', padding: '40px 20px' }}>
                       <div style={{ fontSize: '48px', marginBottom: '20px' }}>🔍</div>
                       <h3 style={{ fontSize: '20px', fontWeight: '600', color: '#333', marginBottom: '10px' }}>
-                        No services available
+                        We haven't started here yet
                       </h3>
                       <p style={{ color: '#666', fontSize: '16px', marginBottom: '20px' }}>
-                        No services are currently available for postcode {searchResults.postcode}.
+                        We are currently expanding! We don't have services in {searchResults.postcode} right now. Contact us to let us know you're interested!
                       </p>
                       <Link
                         href="/contact"
@@ -636,6 +727,7 @@ const HeroSection = () => {
                       </Link>
                     </div>
                   )}
+                  </div>
                 </div>
               </div>
             )}
