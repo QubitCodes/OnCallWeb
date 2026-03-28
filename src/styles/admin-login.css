@@ -115,9 +115,13 @@
 }
 
 .admin-login-logo img {
-  height: 2rem;
+  height: auto;
+  min-height: 3rem;
   width: auto;
+  max-width: 15rem;
+  object-fit: contain;
   transition: transform 0.3s ease;
+  filter: brightness(0) invert(1);
 }
 
 .admin-login-logo:hover img {

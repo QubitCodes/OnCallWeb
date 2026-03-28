@@ -66,17 +66,12 @@ const SignIn: React.FC = () => {
           <div className="content-wrapper">
             <Link className="admin-login-logo" href="/admin/login">
               <Image
-                className="hidden dark:block"
                 src={"/images/logo.png"}
                 alt="Logo"
-                width={176}
-                height={32} />
-              <Image
-                className="dark:hidden"
-                src={"/images/logo.png"}
-                alt="Logo"
-                width={176}
-                height={32} />
+                width={220}
+                height={60}
+                style={{ objectFit: 'contain' }}
+              />
             </Link>
 
             <p className="admin-login-welcome-text">

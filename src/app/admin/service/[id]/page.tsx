@@ -69,6 +69,8 @@ const ServiceDetailsPage = () => {
   const [selectedLocationForModal, setSelectedLocationForModal] = useState<LocationSuggestion | null>(null);
   const [availablePostcodes, setAvailablePostcodes] = useState<PostcodeData[]>([]);
   const [isLoadingPostcodes, setIsLoadingPostcodes] = useState(false);
+  const [editingZipcode, setEditingZipcode] = useState<string | null>(null);
+  const [editingZipcodeValue, setEditingZipcodeValue] = useState("");
 
   // Service form state
   const [formData, setFormData] = useState({
@@ -134,7 +136,8 @@ const ServiceDetailsPage = () => {
             params: {
               q: searchQuery,
               country: 'gb',
-              limit: 10
+              limit: 10,
+              type: 'city'
             }
           });
           
@@ -192,7 +195,10 @@ const ServiceDetailsPage = () => {
            outwardMap.set(outward, { ...p, postcode: outward });
         }
       });
-      const uniqueOutwardPostcodes = Array.from(outwardMap.values()).sort((a, b) => a.postcode.localeCompare(b.postcode));
+      // Stringently ensure no postcode exceeds 4 characters
+      const uniqueOutwardPostcodes = Array.from(outwardMap.values())
+        .filter(p => p.postcode.length <= 4)
+        .sort((a, b) => a.postcode.localeCompare(b.postcode));
       
       setAvailablePostcodes(uniqueOutwardPostcodes);
       setIsLocationModalOpen(true);
@@ -287,6 +293,41 @@ const ServiceDetailsPage = () => {
     } catch (error) {
       console.error('Failed to delete zipcode:', error);
       toast.error('Failed to delete zipcode');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Handle edit zipcode save
+  const handleSaveEditZipcode = async (oldZipcode: string) => {
+    if (!service) return;
+    const newZipcode = editingZipcodeValue.trim().toUpperCase().replace(/\s+/g, '');
+    
+    if (!newZipcode || newZipcode === oldZipcode) {
+      setEditingZipcode(null);
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      
+      // 1. Delete old zipcode
+      await axios.delete(`${API_URL}/services/${serviceId}/zipcodes`, {
+        data: { zipcode: oldZipcode }
+      });
+
+      // 2. Add new zipcode
+      await axios.post(`${API_URL}/services/${serviceId}/zipcodes`, {
+        zipcodes: [newZipcode]
+      });
+
+      toast.success('Zipcode updated successfully!');
+      const updatedZipcodes = service.zipcodes?.map(z => z === oldZipcode ? newZipcode : z) || [];
+      setService({ ...service, zipcodes: updatedZipcodes });
+      setEditingZipcode(null);
+    } catch (error) {
+      console.error('Failed to update zipcode:', error);
+      toast.error('Failed to update zipcode');
     } finally {
       setIsSaving(false);
     }
@@ -632,30 +673,77 @@ const ServiceDetailsPage = () => {
                         <tbody>
                           {service.zipcodes.map((zipcode, index) => (
                             <tr key={index} className={styles.tableRow}>
-                              <td className={styles.tableCell}>{zipcode}</td>
                               <td className={styles.tableCell}>
-                                <button
-                                  onClick={() => handleDeleteZipcode(zipcode)}
-                                  className={styles.deleteZipcodeBtn}
-                                  disabled={isSaving}
-                                  title="Delete zipcode"
-                                >
-                                  <svg
-                                    className={styles.deleteIcon}
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                    />
-                                  </svg>
-                                  Delete
-                                </button>
+                                {editingZipcode === zipcode ? (
+                                  <input
+                                    type="text"
+                                    value={editingZipcodeValue}
+                                    onChange={(e) => setEditingZipcodeValue(e.target.value)}
+                                    className={`${styles.formInput} px-3 py-1.5 text-sm w-32 border border-gray-300 rounded`}
+                                    autoFocus
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') handleSaveEditZipcode(zipcode);
+                                      if (e.key === 'Escape') setEditingZipcode(null);
+                                    }}
+                                  />
+                                ) : (
+                                  zipcode
+                                )}
+                              </td>
+                              <td className={styles.tableCell}>
+                                {editingZipcode === zipcode ? (
+                                  <div className="flex gap-3">
+                                    <button
+                                      onClick={() => handleSaveEditZipcode(zipcode)}
+                                      className="text-green-600 hover:text-green-800 disabled:opacity-50 text-sm font-medium"
+                                      disabled={isSaving}
+                                    >
+                                      Save
+                                    </button>
+                                    <button
+                                      onClick={() => setEditingZipcode(null)}
+                                      className="text-gray-500 hover:text-gray-700 disabled:opacity-50 text-sm font-medium"
+                                      disabled={isSaving}
+                                    >
+                                      Cancel
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <div className="flex gap-4">
+                                    <button
+                                      onClick={() => {
+                                        setEditingZipcode(zipcode);
+                                        setEditingZipcodeValue(zipcode);
+                                      }}
+                                      className="text-blue-600 hover:text-blue-800 disabled:opacity-50 text-sm font-medium"
+                                      disabled={isSaving}
+                                    >
+                                      Edit
+                                    </button>
+                                    <button
+                                      onClick={() => handleDeleteZipcode(zipcode)}
+                                      className="text-red-500 hover:text-red-700 disabled:opacity-50 text-sm font-medium flex items-center gap-1"
+                                      disabled={isSaving}
+                                      title="Delete zipcode"
+                                    >
+                                      <svg
+                                        className="w-4 h-4"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                        />
+                                      </svg>
+                                      Delete
+                                    </button>
+                                  </div>
+                                )}
                               </td>
                             </tr>
                           ))}

@@ -693,19 +693,21 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
           <Link href="/admin/dashboard">
            <Image
       width={176}
-      height={32}
-      src="/assets/images/resources/logo-light.png"
+      height={50}
+      src="/images/logo.png"
       alt="Logo"
       priority
       className="sidebar-logo-light"
+      style={{ objectFit: 'contain' }}
     />
     <Image
       width={176}
-      height={32}
-      src="/assets/images/resources/logo-dark.png"
+      height={50}
+      src="/images/logo.png"
       alt="Logo"
       priority
       className="sidebar-logo-dark"
+      style={{ objectFit: 'contain' }}
     />
           </Link>
 
