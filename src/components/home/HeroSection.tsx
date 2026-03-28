@@ -707,8 +707,8 @@ const HeroSection = () => {
                       <h3 style={{ fontSize: '20px', fontWeight: '600', color: '#333', marginBottom: '10px' }}>
                         We haven't started here yet
                       </h3>
-                      <p style={{ color: '#666', fontSize: '16px', marginBottom: '20px' }}>
-                        We are currently expanding! We don't have services in {searchResults.postcode} right now. Contact us to let us know you're interested!
+                      <p style={{ color: '#666', fontSize: '16px', marginBottom: '20px', lineHeight: '1.5' }}>
+                        We are currently expanding! We don't have services in {searchResults.postcode ? searchResults.postcode : 'your area'} right now. <br /> Contact us to let us know you're interested!
                       </p>
                       <Link
                         href="/contact"

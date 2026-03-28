@@ -157,7 +157,7 @@ const CustomerServiceSearch: React.FC = () => {
                 We haven't started here yet
               </h4>
               <p className="text-yellow-700 text-sm mb-4">
-                We are currently expanding! We don't have services in {results.postcode} right now. Contact us to let us know you're interested!
+                We are currently expanding! We don't have services in {results.postcode ? results.postcode : 'your area'} right now. <br /> Contact us to let us know you're interested!
               </p>
               <a
                 href="/contact"
