@@ -521,7 +521,7 @@
 
   /* Page Header */
   .page-header {
-    @apply relative bg-accent bg-center bg-cover py-[145px];
+    @apply relative bg-accent bg-center bg-cover py-[145px] max-w-full rounded-none;
     background-image: url('../images/page-header-bg.png');
   }
 

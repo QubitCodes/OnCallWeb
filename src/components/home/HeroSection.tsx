@@ -149,20 +149,20 @@ const HeroSection = () => {
       display: 'flex',
       flexDirection: 'column',
       gap: '10px',
-      padding: '16px',
-      backgroundColor: 'rgba(255, 255, 255, 0.1)',
-      borderRadius: '12px',
-      backdropFilter: 'blur(8px)',
-      border: '1px solid rgba(255, 255, 255, 0.2)'
+      padding: '0',
+      backgroundColor: 'transparent',
+      borderRadius: '0',
+      backdropFilter: 'none',
+      border: 'none'
     }
     : {
       display: 'flex',
       gap: '10px',
-      padding: '20px',
-      backgroundColor: 'rgba(255, 255, 255, 0.1)',
-      borderRadius: '15px',
-      backdropFilter: 'blur(10px)',
-      border: '1px solid rgba(255, 255, 255, 0.2)'
+      padding: '0',
+      backgroundColor: 'transparent',
+      borderRadius: '0',
+      backdropFilter: 'none',
+      border: 'none'
     };
 
   const inputStyle: React.CSSProperties = isMobile
@@ -311,7 +311,6 @@ const HeroSection = () => {
                         borderRadius: '15px',
                         padding: '25px',
                         color: '#333',
-                        minWidth: '280px',
                         border: '2px solid #e0e0e0',
                         textAlign: 'center',
                         boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
@@ -396,8 +395,7 @@ const HeroSection = () => {
                         backgroundColor: '#46bdec',
                         borderRadius: '15px',
                         padding: '25px',
-                        color: 'white',
-                        minWidth: '280px'
+                        color: 'white'
                       }}
                     >
                       <h3 style={{

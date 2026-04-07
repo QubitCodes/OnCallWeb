@@ -4,6 +4,8 @@
   text-align: center;
   background: var(--primary-color);
   color: var(--white-color);
+  max-width: 100%;
+  border-radius: 0;
 }
 
 .page-header-content h1 {

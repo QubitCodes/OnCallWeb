@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, use } from 'react';
 import servicesData from '@/data/services.json';
 
 interface Service {
@@ -32,10 +32,11 @@ interface Service {
 }
 
 interface ServiceDetailPageProps {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
 export default function ServiceDetailPage({ params }: ServiceDetailPageProps) {
+  const resolvedParams = use(params);
   const [service, setService] = useState<Service | null>(null);
   const [allServices, setAllServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,14 +45,14 @@ export default function ServiceDetailPage({ params }: ServiceDetailPageProps) {
     // Load all services from JSON
     const services = servicesData.services as Service[];
     setAllServices(services);
-        console.log('Fetched services:', params.slug);
+        console.log('Fetched services:', resolvedParams.slug);
 
     // Find the specific service by slug
-    const foundService = services.find(s => s.slug == params.slug);
+    const foundService = services.find(s => s.slug == resolvedParams.slug);
         console.log('Fetched services:');
     setService(foundService || null);
     setLoading(false);
-  }, [params.slug]);
+  }, [resolvedParams.slug]);
 
   if (loading) {
     return (
@@ -151,13 +152,7 @@ export default function ServiceDetailPage({ params }: ServiceDetailPageProps) {
 
                 {/* Sidebar Cta Box Start */}
                 <div className="sidebar-cta-box wow fadeInUp" data-wow-delay="0.2s">
-                  {/* Sidebar CTA Image Start */}
-                  <div className="sidebar-cta-image">
-                    <figure className="image-anime">
-                      <Image src="/images/sidebar-cta-image.jpg" alt="CTA" width={600} height={800} />
-                    </figure>
-                  </div>
-                  {/* Sidebar CTA Image End */}
+
 
                   {/* Sidebar CTA Content Start */}
                   <div className="sidebar-cta-content">
@@ -177,9 +172,13 @@ export default function ServiceDetailPage({ params }: ServiceDetailPageProps) {
 
                   {/* Sidebar CTA Contact Start */}
                   <div className="sidebar-cta-contact">
-                    <a href="tel:01414063322">
+                    <a href="tel:01413841372">
                       <Image src="/images/icon-phone.svg" alt="Phone" width={24} height={24} />
-                      01414063322
+                      0141 3841372
+                    </a>
+                    <a href="tel:07912295558" style={{ marginTop: '10px' }}>
+                      <Image src="/images/icon-phone.svg" alt="Phone" width={24} height={24} />
+                      07912295558
                     </a>
                   </div>
                   {/* Sidebar CTA Contact End */}
@@ -192,14 +191,7 @@ export default function ServiceDetailPage({ params }: ServiceDetailPageProps) {
             {/* Main Content Start */}
             <div className="col-lg-8 order-1 order-lg-2">
               <div className="service-single-content">
-                {/* Page Single image Start */}
-                <div className="page-single-image">
-                  <figure className="image-anime reveal">
-                    {/* <Image src={service.image} alt={service.name} width={1200} height={700} /> */}
-                    <Image src="/images/service-support-image-.jpg" alt={service.name} width={1200} height={700} />
-                  </figure>
-                </div>
-                {/* Page Single image End */}
+
 
                 {/* Service Entry Start */}
                 <div className="service-entry">
@@ -324,25 +316,7 @@ export default function ServiceDetailPage({ params }: ServiceDetailPageProps) {
                       </div>
                     </div>
 
-                    {/* Image + Video */}
-                    <div className="service-support-image-video">
-                      <div className="service-support-image">
-                        <figure className="image-anime reveal">
-                          <Image src="/images/service-support-image-1.jpg" alt="Care support" width={900} height={700} />
-                        </figure>
-                      </div>
 
-                      <div className="service-support-video">
-                        <figure className="image-anime">
-                          <Image src="/images/service-support-image-2.jpg" alt="Care video" width={900} height={700} />
-                        </figure>
-                        <div className="video-play-button">
-                          <a href="https://www.youtube.com/watch?v=Y-x0efG1seA" className="popup-video" data-cursor-text="Play">
-                            <i className="fa-solid fa-play" />
-                          </a>
-                        </div>
-                      </div>
-                    </div>
                   </div>
                   {/* Service Support Box End */}
                 </div>

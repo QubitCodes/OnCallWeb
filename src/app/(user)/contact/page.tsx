@@ -227,30 +227,30 @@ export default function Contact() {
                 </div>
 
                 <div className="contact-info-list">
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'flex-start' }}>
-                    <div className="contact-info-item wow fadeInUp" data-wow-delay="0.4s" style={{ flex: 1, minWidth: 300 }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 50, alignItems: 'flex-start' }}>
+                    <div className="contact-info-item wow fadeInUp" data-wow-delay="0.4s" style={{ minWidth: 280 }}>
                       <div className="icon-box">
-                        <Image src="/images/icon-mail.svg" alt="" width={40} height={40} />
+                        <Image src="/images/icon-service-1.svg" alt="" width={40} height={40} />
                       </div>
                       <div className="contact-item-content">
-                        <h3>Email</h3>
-                        <p>
+                        <h3>Homecare</h3>
+                        <p style={{ marginBottom: '8px' }}>
                           <a href="mailto:homecare@oncallcareservice.co.uk">homecare@oncallcareservice.co.uk</a>
                         </p>
                         <p>
-                          <a href="mailto:hr@oncallcareservice.co.uk">hr@oncallcareservice.co.uk</a>
+                          <a href="tel:01413841372">0141 3841372</a> / <a href="tel:07912295558">07912295558</a>
                         </p>
                       </div>
                     </div>
 
-                    <div className="contact-info-item wow fadeInUp" data-wow-delay="0.6s" style={{ flex: '0 0 200px' }}>
+                    <div className="contact-info-item wow fadeInUp" data-wow-delay="0.6s" style={{ minWidth: 200 }}>
                       <div className="icon-box">
-                        <Image src="/images/icon-phone.svg" alt="" width={40} height={40} />
+                        <Image src="/images/icon-user.svg" alt="" width={40} height={40} />
                       </div>
                       <div className="contact-item-content">
-                        <h3>Phone</h3>
-                        <p>
-                          <a href="tel:01414063322">01414063322</a>
+                        <h3>HR</h3>
+                        <p style={{ marginBottom: '8px' }}>
+                          <a href="mailto:hr@oncallcareservice.co.uk">hr@oncallcareservice.co.uk</a>
                         </p>
                         <p>
                           <a href="tel:07512316043">07512316043</a>

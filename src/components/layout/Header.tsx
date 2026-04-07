@@ -95,7 +95,8 @@ const Header = () => {
         stickyEl.style.backgroundColor = '#fff';
       } else {
         stickyEl.style.position = '';
-        stickyEl.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.1)';
+        stickyEl.style.boxShadow = 'none';
+        stickyEl.style.backgroundColor = '#fff';
       }
     };
     onScroll();
@@ -383,7 +384,7 @@ const Header = () => {
   };
 
   return (
-    <header className="main-header bg-section">
+    <header className="main-header" style={{ backgroundColor: '#fff', width: '100%', maxWidth: '100%' }}>
       <div className="header-sticky" ref={navRef}>
         <nav className="navbar navbar-expand-lg">
           <div className="container-fluid d-flex justify-content-between align-items-center">
