@@ -1,0 +1,6 @@
+﻿
+> carely-nextjs@0.1.0 db:migrate
+> tsx src/db/runMigrations.ts
+
+Ôùç injected env (7) from .env // tip: Ôîÿ multiple files { path: ['.env.local', '.env'] }
+Running migrations...
