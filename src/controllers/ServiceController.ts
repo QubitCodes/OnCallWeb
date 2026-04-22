@@ -1,5 +1,5 @@
 import { db } from '@db/index';
-import { services, serviceCategories } from '@db/schema';
+import { services, serviceCategories, serviceAvailabilities } from '@db/schema';
 import { eq, isNull, desc } from 'drizzle-orm';
 import { ResponseHandler, INTERNAL_CODES, HTTP_STATUS } from '@utils/responseHandler';
 import { serviceSchema } from '@schemas/service.schema';
@@ -96,10 +96,28 @@ export class ServiceController {
 				return ResponseHandler.error('Service not found', INTERNAL_CODES.RESOURCE_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
 			}
 
+			// Fetch related location configuration
+			const availabilities = await db
+				.select()
+				.from(serviceAvailabilities)
+				.where(eq(serviceAvailabilities.serviceId, id));
+
+			let locationTemplateId = null;
+			let customAreas: any[] = [];
+			
+			for (const av of availabilities) {
+				if (av.templateId) {
+					locationTemplateId = av.templateId;
+				}
+				if (av.boundary) {
+					customAreas.push({ boundary: av.boundary, type: av.type });
+				}
+			}
+
 			// Omit deletedAt from the response payload
 			const { deletedAt, ...serviceData } = record[0];
 
-			return ResponseHandler.success(serviceData, 'Service fetched successfully');
+			return ResponseHandler.success({ ...serviceData, locationTemplateId, customAreas }, 'Service fetched successfully');
 		} catch (error) {
 			console.error('Error fetching service:', error);
 			return ResponseHandler.error('Failed to fetch service', INTERNAL_CODES.DATABASE_ERROR, HTTP_STATUS.INTERNAL_SERVER_ERROR);
@@ -123,12 +141,35 @@ export class ServiceController {
 		}
 
 		try {
+			const { locationTemplateId, customAreas, ...serviceInsertData } = validated.data;
+			
 			const newRecord = await db
 				.insert(services)
 				.values({
-					...validated.data,
+					...serviceInsertData,
 				})
 				.returning();
+
+			const serviceId = newRecord[0].id;
+
+			// Handle serviceAvailabilities
+			if (locationTemplateId) {
+				await db.insert(serviceAvailabilities).values({
+					serviceId,
+					templateId: locationTemplateId,
+					type: 'include',
+				});
+			}
+
+			if (customAreas && customAreas.length > 0) {
+				await db.insert(serviceAvailabilities).values(
+					customAreas.map((area: any) => ({
+						serviceId,
+						boundary: area.boundary,
+						type: area.type,
+					}))
+				);
+			}
 
 			return ResponseHandler.success(newRecord[0], 'Service created successfully', INTERNAL_CODES.CREATED, HTTP_STATUS.CREATED);
 		} catch (error) {
@@ -164,19 +205,90 @@ export class ServiceController {
 				return ResponseHandler.error('Service not found', INTERNAL_CODES.RESOURCE_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
 			}
 
+			const { locationTemplateId, customAreas, ...serviceUpdateData } = validated.data;
+
 			const updatedRecord = await db
 				.update(services)
 				.set({
-					...validated.data,
+					...serviceUpdateData,
 					updatedAt: new Date(),
 				})
 				.where(eq(services.id, id))
 				.returning();
 
+			// Update serviceAvailabilities completely
+			await db.delete(serviceAvailabilities).where(eq(serviceAvailabilities.serviceId, id));
+
+			if (locationTemplateId) {
+				await db.insert(serviceAvailabilities).values({
+					serviceId: id,
+					templateId: locationTemplateId,
+					type: 'include',
+				});
+			}
+
+			if (customAreas && customAreas.length > 0) {
+				await db.insert(serviceAvailabilities).values(
+					customAreas.map((area: any) => ({
+						serviceId: id,
+						boundary: area.boundary,
+						type: area.type,
+					}))
+				);
+			}
+
 			return ResponseHandler.success(updatedRecord[0], 'Service updated successfully', INTERNAL_CODES.UPDATED, HTTP_STATUS.OK);
 		} catch (error) {
 			console.error('Error updating service:', error);
 			return ResponseHandler.error('Failed to update service', INTERNAL_CODES.DATABASE_ERROR, HTTP_STATUS.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	static async updateLocations(requestHelper: any, id: string) {
+		const auth = await ServiceController.authenticate(requestHelper);
+		if (auth.error) return auth.error;
+
+		const { body } = requestHelper;
+		
+		try {
+			const existing = await db
+				.select()
+				.from(services)
+				.where(eq(services.id, id))
+				.limit(1);
+
+			if (!existing.length || existing[0].deletedAt !== null) {
+				return ResponseHandler.error('Service not found', INTERNAL_CODES.RESOURCE_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
+			}
+
+			const locationTemplateId = body.locationTemplateId || null;
+			const customAreas = body.customAreas || [];
+
+			// Update serviceAvailabilities completely
+			await db.delete(serviceAvailabilities).where(eq(serviceAvailabilities.serviceId, id));
+
+			if (locationTemplateId) {
+				await db.insert(serviceAvailabilities).values({
+					serviceId: id,
+					templateId: locationTemplateId,
+					type: 'include',
+				});
+			}
+
+			if (customAreas && customAreas.length > 0) {
+				await db.insert(serviceAvailabilities).values(
+					customAreas.map((area: any) => ({
+						serviceId: id,
+						boundary: area.boundary,
+						type: area.type,
+					}))
+				);
+			}
+
+			return ResponseHandler.success(null, 'Service locations updated successfully', INTERNAL_CODES.UPDATED, HTTP_STATUS.OK);
+		} catch (error) {
+			console.error('Error updating service locations:', error);
+			return ResponseHandler.error('Failed to update service locations', INTERNAL_CODES.DATABASE_ERROR, HTTP_STATUS.INTERNAL_SERVER_ERROR);
 		}
 	}
 

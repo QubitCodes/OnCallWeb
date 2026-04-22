@@ -11,17 +11,17 @@ const runMigrations = async () => {
   });
 
   try {
-    const sql3 = fs.readFileSync(path.join(process.cwd(), 'drizzle/0003_sharp_nick_fury.sql'), 'utf-8');
+    const sql4 = fs.readFileSync(path.join(process.cwd(), 'drizzle/0005_many_phil_sheldon.sql'), 'utf-8');
     
     // Split by Drizzle's statement breakpoint so pg can execute multiple commands safely
-    const statements = sql3.split('--> statement-breakpoint').map(s => s.trim()).filter(s => s.length > 0);
+    const statements = sql4.split('--> statement-breakpoint').map(s => s.trim()).filter(s => s.length > 0);
     
     for (const statement of statements) {
       console.log(`Executing: ${statement.substring(0, 50)}...`);
       await pool.query(statement);
     }
     
-    console.log('Applied 0003_sharp_nick_fury.sql');
+    console.log('Applied 0005_many_phil_sheldon.sql');
     console.log('Migrations completed successfully!');
   } catch (error) {
     console.error('Error running migrations:', error);

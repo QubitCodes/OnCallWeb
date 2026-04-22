@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { useHeaderActions } from '@/context/HeaderActionContext';
 
+
 function TextCounter({ control, name }: { control: Control<ServiceSchema>, name: keyof ServiceSchema }) {
   const value = useWatch({ control, name }) as string || '';
   const charCount = value.length;
@@ -39,7 +40,7 @@ export default function ServiceForm({ isEdit, editId }: { isEdit: boolean, editI
   const { register, handleSubmit, reset, watch, control, formState: { errors } } = useForm<ServiceSchema>({
     resolver: zodResolver(serviceSchema) as any,
     defaultValues: {
-      isActive: true
+      isActive: true,
     }
   });
 
@@ -49,7 +50,10 @@ export default function ServiceForm({ isEdit, editId }: { isEdit: boolean, editI
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await axios.get('/api/v1/service-categories');
+        const token = getCookie('token');
+        const res = await axios.get('/api/v1/service-categories', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
         if (res.data.status) {
           setCategories(res.data.data);
         }

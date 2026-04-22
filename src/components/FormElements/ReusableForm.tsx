@@ -95,8 +95,8 @@ const validationSchemas = {
         comment: z.string().trim().optional().nullable(),
     }),
     contactEdit: z.object({
-    status: z.enum(['view', 'opened', 'replayed', 'need follow up', 'follow up scheduled', 'closed'], {
-      required_error: "Status is required",
+    status: z.enum(['view', 'opened', 'replayed', 'need follow up', 'follow up scheduled', 'closed'] as const, {
+      error: "Status is required"
     }),
     comments: z.string().optional().nullable(),
     followUpDate: z.string().optional().nullable()
@@ -195,7 +195,7 @@ const ReusableForm: React.FC<ReusableFormProps> = ({
             setErrors(prev => ({ ...prev, [name]: '' }));
         } catch (error) {
             if (error instanceof z.ZodError) {
-                const fieldError = error.errors[0];
+                const fieldError = (error as any).errors[0];
                 if (fieldError) {
                     setErrors(prev => ({ ...prev, [name]: fieldError.message }));
                 }
@@ -268,7 +268,7 @@ const ReusableForm: React.FC<ReusableFormProps> = ({
                 if (error instanceof z.ZodError) {
                   console.error("ZodError in handleSubmit:", error); // LOG 14: Zod Error in Submit
                   const newErrors: Record<string, string> = {};
-                  error.errors.forEach(err => {
+                  (error as any).errors.forEach((err: any) => {
                     if (err.path[0]) {
                       newErrors[err.path[0]] = err.message;
                     }

@@ -132,19 +132,19 @@ const CustomerServiceSearch: React.FC = () => {
                 {results.data.map((result) => (
                   <div key={`${result.id}-${result.postcode}`} className="border border-gray-200 rounded-lg p-4">
                     <div className="flex justify-between items-start mb-2">
-                      <h5 className="font-semibold text-black">{result.name}</h5>
+                      <h5 className="font-semibold text-black">{result.service?.name}</h5>
                       <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
-                        {result.category}
+                        {result.service?.category}
                       </span>
                     </div>
-                    <p className="text-gray-600 text-sm mb-3">{result.description}</p>
+                    <p className="text-gray-600 text-sm mb-3">{result.service?.description}</p>
                     <div className="flex justify-between items-center text-sm text-gray-500">
                       {/* <div> */}
                         {/* <span className="font-medium">Area:</span> {result.location.name}
                         {result.location.county && `, ${result.location.county}`}
                       </div> */}
                       <div>
-                        <span className="font-medium">Postcode:</span> {result.zipcodes}
+                        <span className="font-medium">Postcode:</span> {result.postcode}
                       </div>
                     </div>
                   </div>

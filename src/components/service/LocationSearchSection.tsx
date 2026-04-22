@@ -342,13 +342,13 @@ const LocationSearchSection: React.FC<LocationSearchSectionProps> = () => {
       console.log('Adding location:', selectedLocation);
 
       // Validate that we have a selected location
-      // if (!selectedLocation) {
-      //   setAddLocationMessage({
-      //     type: 'error',
-      //     text: 'Please select a location from the suggestions.'
-      //   });
-      //   return;
-      // }
+      if (!selectedLocation) {
+        setAddLocationMessage({
+          type: 'error',
+          text: 'Please select a location from the suggestions.'
+        });
+        return;
+      }
 
       // Prepare location data for the API
       const locationData = {

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Settings, Users, Phone, LogOut, ChevronUp, User, Shield } from 'lucide-react';
+import { LayoutDashboard, Settings, Users, Phone, LogOut, ChevronUp, User, Shield, MapPin } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 
@@ -11,6 +11,7 @@ const navItems = [
   { name: 'Dashboard', href: '/admin2/dashboard', icon: LayoutDashboard },
   { name: 'Admins', href: '/admin2/admins', icon: Shield },
   { name: 'Services', href: '/admin2/services', icon: Settings },
+  { name: 'Location Templates', href: '/admin2/location-templates', icon: MapPin },
   { name: 'Contacts', href: '/admin2/contacts', icon: Phone },
 ];
 

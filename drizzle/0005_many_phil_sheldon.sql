@@ -1,0 +1,1 @@
+ALTER TABLE "location_template_areas" ADD COLUMN "name" varchar(255);

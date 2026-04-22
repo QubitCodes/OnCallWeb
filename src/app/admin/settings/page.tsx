@@ -20,6 +20,7 @@ const Settings = () => {
   // State for personal info form
   const [personalInfo, setPersonalInfo] = useState({
     full_name: user?.user?.fullName || "",
+    phone: user?.user?.phone || "",
   });
 
   // State for password reset form
@@ -42,6 +43,7 @@ const Settings = () => {
     if (user) {
       setPersonalInfo({
         full_name: user.fullName || "",
+        phone: user.phone || "",
       });
     }
   }, [user]);

@@ -1,23 +1,30 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, use, useMemo } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'react-toastify';
 import axios from 'axios';
 import { Loader2, ArrowLeft, MapPin, FileText, Edit, Edit3 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useHeaderActions } from '@/context/HeaderActionContext';
 import Link from 'next/link';
-import { useMemo } from 'react';
+import ServiceLocationSettingsForm from '@/components/admin2/services/ServiceLocationSettingsForm';
 
 export default function ViewServicePage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const unwrappedParams = use(params);
   const { id } = unwrappedParams;
 
   const [service, setService] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'details' | 'locations'>('details');
+  
+  const currentTab = searchParams.get('tab') || 'details';
+  const activeTab = currentTab === 'locations' ? 'locations' : 'details';
+
+  const handleTabChange = (tab: 'details' | 'locations') => {
+    router.push(`/admin2/services/${id}?tab=${tab}`, { scroll: false });
+  };
 
   const getCookie = (name: string) => {
     if (typeof document === 'undefined') return '';
@@ -98,7 +105,7 @@ export default function ViewServicePage({ params }: { params: Promise<{ id: stri
       {/* Tabs */}
       <div className="flex border-b border-secondary-600/10 dark:border-white/5 mb-8">
         <button
-          onClick={() => setActiveTab('details')}
+          onClick={() => handleTabChange('details')}
           className={`flex items-center pb-4 px-6 text-sm font-semibold transition-colors relative ${
             activeTab === 'details' ? 'text-accent' : 'text-text-light hover:text-text-dark dark:hover:text-secondary-200'
           }`}
@@ -110,7 +117,7 @@ export default function ViewServicePage({ params }: { params: Promise<{ id: stri
           )}
         </button>
         <button
-          onClick={() => setActiveTab('locations')}
+          onClick={() => handleTabChange('locations')}
           className={`flex items-center pb-4 px-6 text-sm font-semibold transition-colors relative ${
             activeTab === 'locations' ? 'text-accent' : 'text-text-light hover:text-text-dark dark:hover:text-secondary-200'
           }`}
@@ -176,13 +183,14 @@ export default function ViewServicePage({ params }: { params: Promise<{ id: stri
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="bg-white dark:bg-[#1e1e48] p-12 rounded-xl shadow-card border border-secondary-600/10 dark:border-white/5 text-center"
           >
-            <MapPin className="w-16 h-16 text-text-light mx-auto mb-4 opacity-50" />
-            <h2 className="text-2xl font-bold text-text-dark dark:text-secondary-100 mb-2">Location Assignment</h2>
-            <p className="text-text-light dark:text-secondary-300 max-w-md mx-auto">
-              Location assignments for this service will be configured here once the new location module updates are finalized.
-            </p>
+            <ServiceLocationSettingsForm 
+              serviceId={id} 
+              initialData={{
+                locationTemplateId: service.locationTemplateId,
+                customAreas: service.customAreas
+              }} 
+            />
           </motion.div>
         )}
       </AnimatePresence>
