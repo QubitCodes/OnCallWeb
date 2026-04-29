@@ -1,6 +1,6 @@
 import { db } from '@db/index';
-import { services, serviceCategories, serviceAvailabilities } from '@db/schema';
-import { eq, isNull, desc } from 'drizzle-orm';
+import { services, serviceCategories, serviceAvailabilities, locationTemplates } from '@db/schema';
+import { eq, isNull, isNotNull, desc, inArray, and } from 'drizzle-orm';
 import { ResponseHandler, INTERNAL_CODES, HTTP_STATUS } from '@utils/responseHandler';
 import { serviceSchema } from '@schemas/service.schema';
 import { JwtHelper } from '@utils/jwtHelper';
@@ -44,15 +44,56 @@ export class ServiceController {
 					isActive: services.isActive,
 					createdAt: services.createdAt,
 					updatedAt: services.updatedAt,
+					locationTemplateName: locationTemplates.name,
 				})
 				.from(services)
 				.leftJoin(serviceCategories, eq(services.category, serviceCategories.id))
+				.leftJoin(serviceAvailabilities, eq(services.id, serviceAvailabilities.serviceId))
+				.leftJoin(locationTemplates, eq(serviceAvailabilities.templateId, locationTemplates.id))
 				.where(isNull(services.deletedAt))
 				.orderBy(desc(services.createdAt));
 
 			return ResponseHandler.success(allServices, 'Services fetched successfully');
 		} catch (error) {
 			console.error('Error fetching services:', error);
+			return ResponseHandler.error('Failed to fetch services', INTERNAL_CODES.DATABASE_ERROR, HTTP_STATUS.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	static async publicList() {
+		try {
+			const allServices = await db
+				.select({
+					id: services.id,
+					name: services.name,
+					slug: services.slug,
+					category: services.category,
+					categoryName: serviceCategories.name,
+					description: services.description,
+					image: services.image,
+					icon: services.icon,
+					isActive: services.isActive,
+					createdAt: services.createdAt,
+					updatedAt: services.updatedAt,
+				})
+				.from(services)
+				.leftJoin(serviceCategories, eq(services.category, serviceCategories.id))
+				.innerJoin(serviceAvailabilities, eq(services.id, serviceAvailabilities.serviceId))
+				.where(
+					and(
+						isNull(services.deletedAt),
+						eq(services.isActive, true)
+					)
+				)
+				.groupBy(
+					services.id,
+					serviceCategories.name
+				)
+				.orderBy(desc(services.createdAt));
+
+			return ResponseHandler.success(allServices, 'Public services fetched successfully');
+		} catch (error) {
+			console.error('Error fetching public services:', error);
 			return ResponseHandler.error('Failed to fetch services', INTERNAL_CODES.DATABASE_ERROR, HTTP_STATUS.INTERNAL_SERVER_ERROR);
 		}
 	}
@@ -321,6 +362,64 @@ export class ServiceController {
 		} catch (error) {
 			console.error('Error deleting service:', error);
 			return ResponseHandler.error('Failed to delete service', INTERNAL_CODES.DATABASE_ERROR, HTTP_STATUS.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	static async bulkAction(requestHelper: any) {
+		const auth = await ServiceController.authenticate(requestHelper);
+		if (auth.error) return auth.error;
+
+		const { body } = requestHelper;
+		const { action, serviceIds, value } = body;
+
+		if (!action || !serviceIds || !Array.isArray(serviceIds) || serviceIds.length === 0) {
+			return ResponseHandler.error('Invalid payload', INTERNAL_CODES.VALIDATION_ERROR, HTTP_STATUS.BAD_REQUEST);
+		}
+
+		try {
+			switch (action) {
+				case 'delete':
+					await db
+						.update(services)
+						.set({
+							deletedAt: new Date(),
+							deleteReason: 'Bulk deleted by admin',
+						})
+						.where(inArray(services.id, serviceIds));
+					break;
+				case 'change_status':
+					if (typeof value !== 'boolean') throw new Error('Invalid value for status');
+					await db
+						.update(services)
+						.set({ isActive: value })
+						.where(inArray(services.id, serviceIds));
+					break;
+				case 'change_category':
+					if (!value) throw new Error('Category ID required');
+					await db
+						.update(services)
+						.set({ category: value })
+						.where(inArray(services.id, serviceIds));
+					break;
+				case 'assign_location':
+					await db.delete(serviceAvailabilities).where(inArray(serviceAvailabilities.serviceId, serviceIds));
+					if (value) {
+						const inserts = serviceIds.map(id => ({
+							serviceId: id,
+							templateId: value,
+							type: 'include',
+						}));
+						await db.insert(serviceAvailabilities).values(inserts);
+					}
+					break;
+				default:
+					return ResponseHandler.error('Invalid action', INTERNAL_CODES.VALIDATION_ERROR, HTTP_STATUS.BAD_REQUEST);
+			}
+
+			return ResponseHandler.success(null, 'Bulk action completed successfully', INTERNAL_CODES.OK, HTTP_STATUS.OK);
+		} catch (error: any) {
+			console.error('Error in bulk action:', error);
+			return ResponseHandler.error(error.message || 'Failed to execute bulk action', INTERNAL_CODES.DATABASE_ERROR, HTTP_STATUS.INTERNAL_SERVER_ERROR);
 		}
 	}
 }

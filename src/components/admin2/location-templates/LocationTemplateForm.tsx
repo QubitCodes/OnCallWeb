@@ -351,7 +351,7 @@ export default function LocationTemplateForm({ templateId }: { templateId?: stri
           url += `&viewbox=${minLng},${maxLat},${maxLng},${minLat}`;
         }
 
-        const response = await fetch(url, { headers: { 'User-Agent': 'OnCallWeb/1.0' } });
+        const response = await fetch(url);
         data = await response.json();
       }
 

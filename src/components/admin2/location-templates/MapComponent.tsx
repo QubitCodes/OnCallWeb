@@ -33,7 +33,7 @@ interface Area {
   type: 'include' | 'exclude';
 }
 
-export default function MapComponent({ areas, onAreasChange, drawMode = 'exclude', focusedArea = null }: { areas: Area[], onAreasChange: (areas: Area[]) => void, drawMode?: 'include' | 'exclude', focusedArea?: { index: number, ts: number } | null }) {
+export default function MapComponent({ areas, onAreasChange, drawMode = 'exclude', focusedArea = null, readOnly = false }: { areas: Area[], onAreasChange: (areas: Area[]) => void, drawMode?: 'include' | 'exclude', focusedArea?: { index: number, ts: number } | null, readOnly?: boolean }) {
   const mapRef = useRef<L.Map>(null);
   const featureGroupRef = useRef<L.FeatureGroup>(null);
   const [isMounted, setIsMounted] = useState(false);
@@ -186,8 +186,9 @@ export default function MapComponent({ areas, onAreasChange, drawMode = 'exclude
         `}</style>
         
         <FeatureGroup ref={featureGroupRef}>
-          <EditControl
-            key={`edit-control-${drawMode}`}
+          {!readOnly && (
+            <EditControl
+              key={`edit-control-${drawMode}`}
             position="topright"
             onCreated={_onCreated}
             edit={{ edit: false, remove: false }}
@@ -204,6 +205,7 @@ export default function MapComponent({ areas, onAreasChange, drawMode = 'exclude
               }
             }}
           />
+          )}
         </FeatureGroup>
 
         {areas.map((area, idx) => {
@@ -268,18 +270,20 @@ export default function MapComponent({ areas, onAreasChange, drawMode = 'exclude
                     <p className="font-semibold text-text-dark mb-3 text-sm leading-tight">
                       {area.name || `Custom ${isExclude ? 'Exclude' : 'Include'} Zone`}
                     </p>
-                    <button 
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const newAreas = [...areas];
-                        newAreas.splice(idx, 1);
-                        onAreasChange(newAreas);
-                      }}
-                      className="w-full px-3 py-1.5 bg-error/10 text-error font-bold text-xs rounded-md border border-error/20 hover:bg-error hover:text-white transition-colors flex items-center justify-center cursor-pointer"
-                    >
-                      Delete Zone
-                    </button>
+                    {!readOnly && (
+                      <button 
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const newAreas = [...areas];
+                          newAreas.splice(idx, 1);
+                          onAreasChange(newAreas);
+                        }}
+                        className="w-full px-3 py-1.5 bg-error/10 text-error font-bold text-xs rounded-md border border-error/20 hover:bg-error hover:text-white transition-colors flex items-center justify-center cursor-pointer"
+                      >
+                        Delete Zone
+                      </button>
+                    )}
                   </div>
                 </Popup>
               </Marker>

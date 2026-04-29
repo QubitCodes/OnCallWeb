@@ -12,7 +12,8 @@ export const useServices = () => {
       try {
         setLoading(true);
         setError(null);
-        const response = await axios.get('/all-services');
+        // Use native axios to hit the local Next.js API route instead of the Adonis base URL
+        const response = await require('axios').default.get('/api/v1/public/services');
         const servicesData = response.data.data || response.data || [];
         
         // Ensure we have valid service objects
