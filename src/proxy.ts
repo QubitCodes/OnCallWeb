@@ -16,12 +16,7 @@ export function proxy(req: NextRequest) {
 		return NextResponse.next();
 	}
 
-	// 1. Block any direct access to /admin2 with a strict 404
-	if (pathname.startsWith('/admin2')) {
-		return NextResponse.rewrite(new URL('/404', req.url));
-	}
-
-	// 2. Protect /admin routes (except the login page)
+	// Protect /admin routes (except the login page)
 	if (pathname.startsWith('/admin')) {
 		// Allow access to login page
 		if (pathname === '/admin/login') {
@@ -37,5 +32,6 @@ export function proxy(req: NextRequest) {
 }
 
 export const config = {
-	matcher: ['/admin/:path*', '/admin2/:path*'],
+	matcher: ['/admin/:path*'],
 };
+
