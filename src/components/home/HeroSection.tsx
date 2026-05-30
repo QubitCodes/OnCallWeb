@@ -117,10 +117,13 @@ const HeroSection = () => {
           }
         }
 
-        if (data.length === 0) {
-          const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=5`);
-          data = await response.json();
-        }
+				if (data.length === 0) {
+					const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=10&countrycodes=gb`);
+					const results = await response.json();
+					data = (results || [])
+						.filter((r: any) => r.display_name.toLowerCase().includes('united kingdom') || r.display_name.toLowerCase().includes(', uk'))
+						.slice(0, 5);
+				}
 
         setSuggestions(data || []);
       } catch (err) {
@@ -226,10 +229,13 @@ const HeroSection = () => {
         }
       }
 
-      if (data.length === 0) {
-        const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchQuery)}&format=json&limit=1`);
-        data = await response.json();
-      }
+			if (data.length === 0) {
+				const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchQuery)}&format=json&limit=5&countrycodes=gb`);
+				const results = await response.json();
+				data = (results || [])
+					.filter((r: any) => r.display_name.toLowerCase().includes('united kingdom') || r.display_name.toLowerCase().includes(', uk'))
+					.slice(0, 1);
+			}
 
       if (data && data.length > 0) {
         const match = data[0];
