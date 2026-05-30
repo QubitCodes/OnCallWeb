@@ -8,6 +8,9 @@ import './globals.css';
 export default function Admin2Layout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+      </head>
       <body suppressHydrationWarning>
         <AdminProviders>
           <div className="flex h-screen bg-[#f8f9fa] dark:bg-[#171738] text-text-dark dark:text-secondary-100 font-sans transition-colors duration-300">
