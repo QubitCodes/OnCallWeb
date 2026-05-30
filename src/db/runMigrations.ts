@@ -22,7 +22,15 @@ const runMigrations = async () => {
     
     for (const statement of statements) {
       console.log(`Executing: ${statement.substring(0, 50)}...`);
-      await pool.query(statement);
+      try {
+        await pool.query(statement);
+      } catch (err: any) {
+        if (err.code === '42701') {
+          console.log('Column already exists, skipping safely...');
+        } else {
+          throw err;
+        }
+      }
     }
     
     console.log('Applied 0005_many_phil_sheldon.sql');
