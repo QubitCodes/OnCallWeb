@@ -8,11 +8,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 
 const navItems = [
-  { name: 'Dashboard', href: '/admin2/dashboard', icon: LayoutDashboard },
-  { name: 'Admins', href: '/admin2/admins', icon: Shield },
-  { name: 'Services', href: '/admin2/services', icon: Settings },
-  { name: 'Location Templates', href: '/admin2/location-templates', icon: MapPin },
-  { name: 'Contacts', href: '/admin2/contacts', icon: Phone },
+  { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
+  { name: 'Admins', href: '/admin/admins', icon: Shield },
+  { name: 'Services', href: '/admin/services', icon: Settings },
+  { name: 'Location Templates', href: '/admin/location-templates', icon: MapPin },
+  { name: 'Contacts', href: '/admin/contacts', icon: Phone },
 ];
 
 export default function Sidebar() {
@@ -49,7 +49,7 @@ export default function Sidebar() {
     fetchAdmin();
   }, []);
 
-  if (pathname === '/admin2/login') return null;
+  if (pathname === '/admin/login') return null;
 
   /** Derive the avatar initial from the fetched name */
   const avatarInitial = adminName ? adminName.charAt(0).toUpperCase() : 'A';
@@ -104,7 +104,7 @@ export default function Sidebar() {
             >
               <div className="p-2 space-y-1">
                 <Link
-                  href="/admin2/profile"
+                  href="/admin/profile"
                   className="flex items-center w-full px-3 py-2.5 text-sm font-medium text-text-dark dark:text-secondary-200 hover:bg-secondary-50 dark:hover:bg-primary-700/50 rounded-lg transition-colors"
                   onClick={() => setIsProfileMenuOpen(false)}
                 >
@@ -115,7 +115,7 @@ export default function Sidebar() {
                 <button
                   onClick={() => {
                     document.cookie = 'token=; Max-Age=0; path=/';
-                    window.location.href = '/admin2/login';
+                    window.location.href = '/admin/login';
                   }}
                   className="flex items-center w-full px-3 py-2.5 text-sm font-medium text-error hover:bg-error/10 dark:hover:bg-error/20 rounded-lg transition-colors"
                 >

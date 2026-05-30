@@ -1,192 +1,174 @@
+'use client';
 
+import { Suspense, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { loginSchema } from '@/schemas/auth.schema';
+import { z } from 'zod';
+import axios from 'axios';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { toast } from 'react-toastify';
+import { Lock, Mail, Loader2 } from 'lucide-react';
+import { motion } from 'framer-motion';
 
-'use client'; // Make it a client component for useState and useRouter
+type LoginFormValues = z.infer<typeof loginSchema>;
 
-import React, { useState, useEffect } from "react";
-import Link from "next/link";
-import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { isAxiosError } from "axios";
-import { useAuth } from "@/context/AuthContext";
-import '@/styles/admin-login.css';
-
-const SignIn: React.FC = () => {
+function AdminLoginContent() {
   const router = useRouter();
-  const [email, setEmail] = useState(''); // Use email state for email input
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const { login, isAuthenticated, loadingAuthCheck } = useAuth();
+  const searchParams = useSearchParams();
+  const [isLoading, setIsLoading] = useState(false);
+  const callbackUrl = searchParams.get('callbackUrl') || '/admin/dashboard';
 
-  // Redirect if already authenticated
-  useEffect(() => {
-    if (!loadingAuthCheck && isAuthenticated) {
-      router.push('/admin/dashboard');
-    }
-  }, [isAuthenticated, loadingAuthCheck, router]);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+  });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(''); // Clear previous errors
-
+  const onSubmit = async (data: LoginFormValues) => {
+    setIsLoading(true);
     try {
-      await login(email, password);
-  } catch (err: unknown) {
-      console.error('Login error:', err);
-      if (isAxiosError(err)) {
-        // You can access more specific error information from AxiosError
-        console.error('Axios error details:', err.response?.data || err.message);
-        setError(err.response?.data?.message || 'Login failed. Please check your credentials.'); // Display server error message if available
-      } else {
-        setError('An error occurred during login.');
+      const response = await axios.post('/api/v1/auth/login', data);
+      if (response.data.status) {
+        // Set cookie or local storage
+        document.cookie = `token=${response.data.misc.token}; path=/; max-age=2592000`; // 30 days
+        toast.success(response.data.message || 'Login successful');
+        router.replace(callbackUrl);
       }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Authentication failed');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // Show loading spinner while checking authentication
-  if (loadingAuthCheck) {
-    return (
-      <div className="admin-login-container">
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-        </div>
-      </div>
-    );
-  }
-
-  // Don't render login form if already authenticated (will redirect)
-  if (isAuthenticated) {
-    return null;
-  }
-
   return (
-    <div className="admin-login-container">
-      <div className="admin-login-card">
-        {/* Left panel with illustration */}
-        <div className="admin-login-illustration">
-          <div className="content-wrapper">
-            <Link className="admin-login-logo" href="/admin/login">
-              <Image
-                src={"/images/logo.png"}
-                alt="Logo"
-                width={220}
-                height={60}
-                style={{ objectFit: 'contain' }}
+    <div className="fixed inset-0 flex bg-white z-50">
+      {/* Left Banner (Hidden on mobile) */}
+      <div className="hidden lg:flex w-1/2 relative bg-primary items-center justify-center overflow-hidden">
+        {/* Background Image */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center opacity-30 mix-blend-overlay"
+          style={{ backgroundImage: 'url(/images/hero-image.jpg)' }}
+        ></div>
+        
+        {/* Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-primary/40 to-primary/95"></div>
+        
+        <motion.div 
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6 }}
+          className="relative z-10 p-12 text-center"
+        >
+          <img src="/images/logo.png" alt="OnCall Logo" className="h-24 w-auto mx-auto mb-8" style={{ filter: 'brightness(0) invert(1)' }} />
+          <h2 className="text-4xl font-accent italic text-white mb-4">We care for you</h2>
+          <p className="text-white/80 text-lg max-w-md mx-auto">
+            Delivering compassionate, memorable care in the comfort of your own home — because your home is your life.
+          </p>
+        </motion.div>
+      </div>
+
+      {/* Right Login Form */}
+      <div className="w-full lg:w-1/2 flex flex-col justify-center items-center p-8 bg-gray-50 overflow-y-auto">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="w-full max-w-md bg-white rounded-3xl shadow-xl border border-gray-100 p-8 m-4"
+        >
+          <div className="text-center mb-10 flex flex-col items-center lg:hidden">
+            <img src="/images/logo.png" alt="OnCall Logo" className="h-16 w-auto mb-4" />
+          </div>
+          <div className="text-center mb-10 hidden lg:block">
+            <h1 className="text-2xl font-bold text-primary">Welcome Back</h1>
+            <p className="text-gray-500 text-sm mt-2">Sign in to manage your portal</p>
+          </div>
+          <div className="text-center mb-10 lg:hidden">
+            <p className="text-gray-500 text-sm mt-2">Sign in to manage your portal</p>
+          </div>
+
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-primary mb-2">
+              Email Address
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <Mail className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                {...register('email')}
+                type="email"
+                className={`block w-full pl-11 pr-4 py-3 bg-gray-50 border ${
+                  errors.email ? 'border-red-500' : 'border-gray-200'
+                } rounded-xl text-primary focus:ring-2 focus:ring-accent focus:border-transparent transition-all outline-none`}
+                placeholder="admin@oncall.com"
               />
-            </Link>
-
-            <p className="admin-login-welcome-text">
-              Welcome to the Admin Panel. Please sign in to continue.
-            </p>
-
-            <div className="admin-login-svg">
-              {/* SVG Image - Keep as is */}
-              <svg
-                width="350"
-                height="350"
-                viewBox="0 0 350 350"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M33.5825 294.844L30.5069 282.723C25.0538 280.414 19.4747 278.414 13.7961 276.732L13.4079 282.365L11.8335 276.159C4.79107 274.148 0 273.263 0 273.263C0 273.263 6.46998 297.853 20.0448 316.653L35.8606 319.429L23.5737 321.2C25.2813 323.253 27.1164 325.196 29.0681 327.019C48.8132 345.333 70.8061 353.736 78.1898 345.787C85.5736 337.838 75.5526 316.547 55.8074 298.235C49.6862 292.557 41.9968 288.001 34.2994 284.415L33.5825 294.844Z"
-                  fill="#F2F2F2" />
-                {/* Rest of your SVG paths... */}
-              </svg>
             </div>
-          </div>
-        </div>
-
-        {/* Right panel with form */}
-        <div className="admin-login-form-panel">
-          <div className="admin-login-header">
-            <span className="admin-login-badge">Admin Access</span>
-            <h2 className="admin-login-title">
-              Sign in to Admin Panel
-            </h2>
+            {errors.email && (
+              <p className="mt-1.5 text-sm text-error font-medium">{errors.email.message}</p>
+            )}
           </div>
 
-          {error && <div className="admin-login-error">{error}</div>}
-
-          <form onSubmit={handleSubmit} className="admin-login-form"> {/* Form with onSubmit handler */}
-            <div className="admin-form-group">
-              <label className="admin-form-label" htmlFor="email">
-                Email
-              </label>
-              <div className="admin-input-wrapper">
-                <input
-                  type="email"
-                  placeholder="Enter your email"
-                  className="admin-form-input"
-                  id="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)} // Updated to setEmail and email state
-                  required />
-                <span className="admin-input-icon">
-                  <svg
-                    className="fill-current"
-                    width="22"
-                    height="22"
-                    viewBox="0 0 22 22"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <g opacity="0.5">
-                      <path
-                        d="M19.2516 3.30005H2.75156C1.58281 3.30005 0.585938 4.26255 0.585938 5.46567V16.6032C0.585938 17.7719 1.54844 18.7688 2.75156 18.7688H19.2516C20.4203 18.7688 21.4172 17.8063 21.4172 16.6032V5.4313C21.4172 4.26255 20.4203 3.30005 19.2516 3.30005ZM19.2516 4.84692C19.2859 4.84692 19.3203 4.84692 19.3547 4.84692L11.0016 10.2094L2.64844 4.84692C2.68281 4.84692 2.71719 4.84692 2.75156 4.84692H19.2516ZM19.2516 17.1532H2.75156C2.40781 17.1532 2.13281 16.8782 2.13281 16.5344V6.35942L10.1766 11.5157C10.4172 11.6875 10.6922 11.7563 10.9672 11.7563C11.2422 11.7563 11.5172 11.6875 11.7578 11.5157L19.8016 6.35942V16.5688C19.8703 16.9125 19.5953 17.1532 19.2516 17.1532Z"
-                        fill="" />
-                    </g>
-                  </svg>
-                </span>
+          <div>
+            <label className="block text-sm font-medium text-primary mb-2">
+              Password
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <Lock className="h-5 w-5 text-gray-400" />
               </div>
+              <input
+                {...register('password')}
+                type="password"
+                className={`block w-full pl-11 pr-4 py-3 bg-gray-50 border ${
+                  errors.password ? 'border-red-500' : 'border-gray-200'
+                } rounded-xl text-primary focus:ring-2 focus:ring-accent focus:border-transparent transition-all outline-none`}
+                placeholder="••••••••"
+              />
             </div>
+            {errors.password && (
+              <p className="mt-1.5 text-sm text-error font-medium">{errors.password.message}</p>
+            )}
+          </div>
 
-            <div className="admin-form-group">
-              <label className="admin-form-label" htmlFor="password">
-                Password
-              </label>
-              <div className="admin-input-wrapper">
-                <input
-                  type="password"
-                  placeholder="Enter your password"
-                  className="admin-form-input"
-                  id="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required />
-                <span className="admin-input-icon">
-                  <svg
-                    className="fill-current"
-                    width="22"
-                    height="22"
-                    viewBox="0 0 22 22"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <g opacity="0.5">
-                      <path
-                        d="M16.1547 6.80626V5.91251C16.1547 3.16251 14.0922 0.825009 11.4797 0.618759C10.0359 0.481259 8.59219 0.996884 7.52656 1.95938C6.46094 2.92188 5.84219 4.29688 5.84219 5.70626V6.80626C3.84844 7.18438 2.33594 8.93751 2.33594 11.0688V17.2906C2.33594 19.5594 4.19219 21.3813 6.42656 21.3813H15.5016C17.7703 21.3813 19.6266 19.525 19.6266 17.2563V11C19.6609 8.93751 18.1484 7.21876 16.1547 6.80626ZM8.55781 3.09376C9.31406 2.40626 10.3109 2.06251 11.3422 2.16563C13.1641 2.33751 14.6078 3.98751 14.6078 5.91251V6.70313H7.38906V5.67188C7.38906 4.70938 7.80156 3.78126 8.55781 3.09376ZM18.1141 17.2906C18.1141 18.7 16.9453 19.8688 15.5359 19.8688H6.46094C5.05156 19.8688 3.91719 18.7344 3.91719 17.325V11.0688C3.91719 9.52189 5.15469 8.28438 6.70156 8.28438H15.2953C16.8422 8.28438 18.1141 9.52188 18.1141 11V17.2906Z"
-                        fill="" />
-                      <path
-                        d="M10.9977 11.8594C10.5852 11.8594 10.207 12.2031 10.207 12.65V16.2594C10.207 16.6719 10.5508 17.05 10.9977 17.05C11.4102 17.05 11.7883 16.7063 11.7883 16.2594V12.6156C11.7883 12.2031 11.4102 11.8594 10.9977 11.8594Z"
-                        fill="" />
-                    </g>
-                  </svg>
-                </span>
-              </div>
-            </div>
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-lg text-sm font-bold text-white bg-accent hover:bg-[#34a4cf] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent disabled:opacity-70 transition-all transform hover:-translate-y-0.5"
+          >
+            {isLoading ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              'Sign In'
+            )}
+          </button>
+        </form>
+      </motion.div>
 
-            <button
-              type="submit"
-              className="admin-submit-btn"
-            >
-              Sign In
-            </button>
-
-          </form>
-        </div>
+      {/* Footer / Copyright */}
+      <div className="mt-8 text-center text-xs text-gray-400">
+        <p>&copy; {new Date().getFullYear()} Oncall Care Service. All rights reserved.</p>
+        <p className="mt-1">
+          Designed & Developed by <a href="https://qubit.codes" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors font-medium">Qubit Codes</a>
+        </p>
+      </div>
       </div>
     </div>
   );
-};
+}
 
-export default SignIn;
+export default function AdminLogin() {
+  return (
+    <Suspense fallback={
+      <div className="fixed inset-0 flex items-center justify-center bg-white z-50">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    }>
+      <AdminLoginContent />
+    </Suspense>
+  );
+}

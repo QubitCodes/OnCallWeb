@@ -30,7 +30,7 @@ function AxiosGlobalConfig() {
             if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
               document.cookie = 'token=; Max-Age=0; path=/';
               const callbackUrl = encodeURIComponent(window.location.pathname + window.location.search);
-              window.location.replace(`/admin2/login?callbackUrl=${callbackUrl}`);
+              window.location.replace(`/admin/login?callbackUrl=${callbackUrl}`);
             }
           }
         }

@@ -6,9 +6,13 @@ dotenv.config();
 
 const runMigrations = async () => {
   console.log('Running migrations manually to bypass CREATE SCHEMA permissions...');
-  const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-  });
+	const pool = new Pool({
+		host: process.env.DB_HOST || '127.0.0.1',
+		port: process.env.DB_PORT ? parseInt(process.env.DB_PORT) : 5432,
+		user: process.env.DB_USER,
+		password: process.env.DB_PASSWORD,
+		database: process.env.DB_DATABASE,
+	});
 
   try {
     const sql4 = fs.readFileSync(path.join(process.cwd(), 'drizzle/0005_many_phil_sheldon.sql'), 'utf-8');

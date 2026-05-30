@@ -54,7 +54,7 @@ function ContactsContent() {
 	useHeaderActions(null);
 
 	const closeDrawer = () => {
-		router.push('/admin2/contacts');
+		router.push('/admin/contacts');
 	};
 
 	/** Soft-delete a contact */
@@ -191,7 +191,7 @@ function ContactsContent() {
 											</td>
 											<td className="px-6 py-4 border-b border-secondary-600/10 dark:border-white/5 text-right">
 												<button
-													onClick={() => router.push(`/admin2/contacts?action=edit&id=${contact.id}`)}
+													onClick={() => router.push(`/admin/contacts?action=edit&id=${contact.id}`)}
 													className="p-2 text-accent hover:bg-accent/10 rounded-lg transition-colors mr-2"
 													title="View / Update"
 												>

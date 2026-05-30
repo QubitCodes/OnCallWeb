@@ -17,7 +17,7 @@ export default function Header() {
     setMounted(true);
   }, []);
 
-  if (pathname === '/admin2/login') return null;
+  if (pathname === '/admin/login') return null;
 
   /** Subtitle map keyed by the route segment */
   const subtitleMap: Record<string, string> = {

@@ -260,7 +260,7 @@ export default function LocationTemplateForm({ templateId }: { templateId?: stri
           }
         } catch (error) {
           toast.error('Failed to load template details');
-          router.push('/admin2/location-templates');
+          router.push('/admin/location-templates');
         } finally {
           setIsLoading(false);
         }
@@ -419,7 +419,7 @@ export default function LocationTemplateForm({ templateId }: { templateId?: stri
       if (res.data.status) {
         toast.success(`Template ${templateId ? 'updated' : 'created'} successfully`);
         if (!templateId && res.data.data?.id) {
-          router.push(`/admin2/location-templates/${res.data.data.id}/edit`);
+          router.push(`/admin/location-templates/${res.data.data.id}/edit`);
         }
       }
     } catch (error: any) {
@@ -611,7 +611,7 @@ export default function LocationTemplateForm({ templateId }: { templateId?: stri
       <div className="flex justify-end space-x-4 pt-4">
         <button
           type="button"
-          onClick={() => router.push('/admin2/location-templates')}
+          onClick={() => router.push('/admin/location-templates')}
           className="px-6 py-2.5 rounded-lg font-semibold bg-secondary-100 dark:bg-primary-700 text-text-dark dark:text-secondary-100 hover:bg-secondary-200 dark:hover:bg-primary-600 transition-all"
         >
           Cancel

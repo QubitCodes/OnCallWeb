@@ -147,7 +147,7 @@ function ServicesContent() {
   /** Inject the "Add Service" button into the topbar */
   const addButton = useMemo(() => (
     <button
-      onClick={() => router.push('/admin2/services/create')}
+      onClick={() => router.push('/admin/services/create')}
       className="flex items-center px-4 py-2 bg-accent hover:bg-[#34a4cf] text-white rounded-lg hover:shadow-lg transition-all text-sm font-semibold"
     >
       <Plus className="w-4 h-4 mr-1.5" />
@@ -225,7 +225,7 @@ function ServicesContent() {
                   <td className="px-6 py-4 border-b border-secondary-600/10 dark:border-white/5 text-text-light dark:text-secondary-300">
                     {service.locationTemplateName ? (
                       <button
-                        onClick={() => router.push(`/admin2/location-templates/${service.locationTemplateId}/edit`)}
+                        onClick={() => router.push(`/admin/location-templates/${service.locationTemplateId}/edit`)}
                         className="flex items-center text-blue-500 hover:text-blue-600 hover:underline font-medium transition-colors outline-none text-left"
                         title="View Location Template"
                       >
@@ -246,14 +246,14 @@ function ServicesContent() {
                   </td>
                   <td className="px-6 py-4 border-b border-secondary-600/10 dark:border-white/5 text-right">
                     <button 
-                      onClick={() => router.push(`/admin2/services/${service.id}`)}
+                      onClick={() => router.push(`/admin/services/${service.id}`)}
                       className="p-2 text-blue-500 dark:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors mr-2"
                       title="View Details"
                     >
                       <Eye className="w-4 h-4" />
                     </button>
                     <button 
-                      onClick={() => router.push(`/admin2/services/${service.id}/edit`)}
+                      onClick={() => router.push(`/admin/services/${service.id}/edit`)}
                       className="p-2 text-accent hover:bg-accent/10 rounded-lg transition-colors mr-2"
                       title="Edit"
                     >

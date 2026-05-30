@@ -67,7 +67,7 @@ function TemplatesContent() {
 
   const addButton = useMemo(() => (
     <button
-      onClick={() => router.push('/admin2/location-templates/create')}
+      onClick={() => router.push('/admin/location-templates/create')}
       className="flex items-center px-4 py-2 bg-accent hover:bg-[#34a4cf] text-white rounded-lg hover:shadow-lg transition-all text-sm font-semibold"
     >
       <Plus className="w-4 h-4 mr-1.5" />
@@ -129,7 +129,7 @@ function TemplatesContent() {
                   </td>
                   <td className="px-6 py-4 border-b border-secondary-600/10 dark:border-white/5 text-right">
                     <button 
-                      onClick={() => router.push(`/admin2/location-templates/${template.id}/edit`)}
+                      onClick={() => router.push(`/admin/location-templates/${template.id}/edit`)}
                       className="p-2 text-accent hover:bg-accent/10 rounded-lg transition-colors mr-2"
                       title="Edit"
                     >

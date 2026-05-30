@@ -53,7 +53,7 @@ export const contacts = pgTable('contacts', {
   deleteReason: defaultCols.deleteReason,
 });
 
-export const locations = pgTable('locations', {
+export const locations = pgTable('x_locations', {
   id: defaultCols.id,
   name: varchar('name', { length: 255 }).notNull(),
   type: varchar('type', { length: 50 }).notNull(),

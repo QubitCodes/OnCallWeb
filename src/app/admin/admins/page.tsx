@@ -67,7 +67,7 @@ function AdminsContent() {
 	/** Inject the "Add Admin" button into the topbar */
 	const addButton = useMemo(() => (
 		<button
-			onClick={() => router.push('/admin2/admins?action=create')}
+			onClick={() => router.push('/admin/admins?action=create')}
 			className="flex items-center px-4 py-2 bg-accent hover:bg-[#34a4cf] text-white rounded-lg hover:shadow-lg transition-all text-sm font-semibold"
 		>
 			<Plus className="w-4 h-4 mr-1.5" />
@@ -77,7 +77,7 @@ function AdminsContent() {
 	useHeaderActions(addButton);
 
 	const closeDrawer = () => {
-		router.push('/admin2/admins');
+		router.push('/admin/admins');
 	};
 
 	/** Soft-delete an admin */
@@ -211,7 +211,7 @@ function AdminsContent() {
 										</td>
 										<td className="px-6 py-4 border-b border-secondary-600/10 dark:border-white/5 text-right">
 											<button
-												onClick={() => router.push(`/admin2/admins?action=edit&id=${admin.id}`)}
+												onClick={() => router.push(`/admin/admins?action=edit&id=${admin.id}`)}
 												className="p-2 text-accent hover:bg-accent/10 rounded-lg transition-colors mr-2"
 												title="Edit"
 											>

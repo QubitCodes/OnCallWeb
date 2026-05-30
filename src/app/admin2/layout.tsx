@@ -1,26 +1,39 @@
-import { AdminProviders } from '@/components/admin2/Providers';
-import Sidebar from '@/components/admin2/Sidebar';
-import Header from '@/components/admin2/Header';
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import './globals.css';
+"use client";
+import "jsvectormap/dist/jsvectormap.css";
+import "flatpickr/dist/flatpickr.min.css";
+import "@/css/satoshi.css";
+import "@/css/style.css";
+import React, { useEffect, useState } from "react";
+import Loader from "@/components/common/Loader";
+import { AuthProvider } from "@/context/AuthContext";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import "./admin.css";
 
-export default function Admin2Layout({ children }: { children: React.ReactNode }) {
+
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  const [loading, setLoading] = useState<boolean>(true);
+
+  // const pathname = usePathname();
+
+  useEffect(() => {
+    setTimeout(() => setLoading(false), 1000);
+  }, []);
+
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body suppressHydrationWarning>
-        <AdminProviders>
-          <div className="flex h-screen bg-[#f8f9fa] dark:bg-[#171738] text-text-dark dark:text-secondary-100 font-sans transition-colors duration-300">
-            <Sidebar />
-            <div className="flex flex-col flex-1 overflow-hidden">
-              <Header />
-              <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
-                {children}
-              </main>
+    <html lang="en">
+      <body suppressHydrationWarning={true}>
+        <AuthProvider>
+          <ProtectedRoute>
+            <div className="dark:bg-boxdark-2 dark:text-bodydark">
+              {loading ? <Loader /> : children}
             </div>
-          </div>
-          <ToastContainer position="top-right" theme="colored" />
-        </AdminProviders>
+          </ProtectedRoute>
+        </AuthProvider>
       </body>
     </html>
   );

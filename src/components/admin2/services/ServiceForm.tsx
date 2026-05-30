@@ -91,7 +91,7 @@ export default function ServiceForm({ isEdit, editId }: { isEdit: boolean, editI
           }
         } catch (error) {
           toast.error('Failed to load service details');
-          router.push('/admin2/services');
+          router.push('/admin/services');
         } finally {
           setIsFetching(false);
         }
@@ -126,7 +126,7 @@ export default function ServiceForm({ isEdit, editId }: { isEdit: boolean, editI
         });
         if (res.data.status) {
           toast.success('Service updated successfully!');
-          router.push('/admin2/services');
+          router.push('/admin/services');
         }
       } else {
         const res = await axios.post('/api/v1/services', data, {
@@ -134,7 +134,7 @@ export default function ServiceForm({ isEdit, editId }: { isEdit: boolean, editI
         });
         if (res.data.status) {
           toast.success('Service created successfully!');
-          router.push('/admin2/services');
+          router.push('/admin/services');
         }
       }
     } catch (error: any) {
@@ -156,7 +156,7 @@ export default function ServiceForm({ isEdit, editId }: { isEdit: boolean, editI
     <div className="max-w-4xl mx-auto pb-12">
       <div className="flex items-center mb-6">
         <button 
-          onClick={() => router.push('/admin2/services')}
+          onClick={() => router.push('/admin/services')}
           className="mr-4 p-2 hover:bg-secondary-100 dark:hover:bg-primary-700 rounded-full transition-colors"
         >
           <ArrowLeft className="w-5 h-5 text-text-dark dark:text-secondary-200" />
@@ -314,7 +314,7 @@ export default function ServiceForm({ isEdit, editId }: { isEdit: boolean, editI
           <div className="pt-6 border-t border-secondary-600/10 dark:border-primary-600/30 flex justify-end space-x-4">
             <button
               type="button"
-              onClick={() => router.push('/admin2/services')}
+              onClick={() => router.push('/admin/services')}
               className="px-6 py-2.5 text-sm font-semibold text-text-dark dark:text-secondary-300 hover:bg-secondary-100 dark:hover:bg-primary-700 rounded-xl transition-colors"
             >
               Cancel

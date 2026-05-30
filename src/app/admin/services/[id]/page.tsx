@@ -23,7 +23,7 @@ export default function ViewServicePage({ params }: { params: Promise<{ id: stri
   const activeTab = currentTab === 'locations' ? 'locations' : 'details';
 
   const handleTabChange = (tab: 'details' | 'locations') => {
-    router.push(`/admin2/services/${id}?tab=${tab}`, { scroll: false });
+    router.push(`/admin/services/${id}?tab=${tab}`, { scroll: false });
   };
 
   const getCookie = (name: string) => {
@@ -45,7 +45,7 @@ export default function ViewServicePage({ params }: { params: Promise<{ id: stri
         }
       } catch (error) {
         toast.error('Failed to load service details');
-        router.push('/admin2/services');
+        router.push('/admin/services');
       } finally {
         setIsLoading(false);
       }
@@ -58,7 +58,7 @@ export default function ViewServicePage({ params }: { params: Promise<{ id: stri
     if (!service) return null;
     return (
       <Link
-        href={`/admin2/services/${id}/edit`}
+        href={`/admin/services/${id}/edit`}
         className="flex items-center px-4 py-2 bg-accent hover:bg-[#34a4cf] text-white rounded-lg hover:shadow-lg transition-all text-sm font-semibold"
       >
         <Edit className="w-4 h-4 mr-1.5" />
@@ -84,7 +84,7 @@ export default function ViewServicePage({ params }: { params: Promise<{ id: stri
     <div className="max-w-6xl mx-auto pb-12 p-6">
       <div className="flex items-center mb-8">
         <button 
-          onClick={() => router.push('/admin2/services')}
+          onClick={() => router.push('/admin/services')}
           className="mr-4 p-2 hover:bg-secondary-100 dark:hover:bg-primary-700 rounded-full transition-colors"
         >
           <ArrowLeft className="w-5 h-5 text-text-dark dark:text-secondary-200" />
@@ -158,7 +158,7 @@ export default function ViewServicePage({ params }: { params: Promise<{ id: stri
                   <div className="flex justify-between items-start mb-3">
                     <h2 className="text-lg font-bold text-text-dark dark:text-secondary-100">{field.label}</h2>
                     <Link
-                      href={`/admin2/services/${id}/edit#${field.key}`}
+                      href={`/admin/services/${id}/edit#${field.key}`}
                       className="opacity-0 group-hover:opacity-100 p-1.5 bg-secondary-100 hover:bg-secondary-200 dark:bg-primary-700 dark:hover:bg-primary-600 text-text-light dark:text-secondary-300 hover:text-accent rounded-lg transition-all flex items-center"
                       title="Edit this section"
                     >
