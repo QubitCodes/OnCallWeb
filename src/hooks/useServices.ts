@@ -16,12 +16,23 @@ export const useServices = () => {
         const response = await require('axios').default.get('/api/v1/public/services');
         const servicesData = response.data.data || response.data || [];
         
-        // Ensure we have valid service objects
-        const validServices = servicesData.filter((service: Partial<Service>) => 
-          service && service.id && service.name && service.slug
-        );
-        
-        setServices(validServices);
+				// Ensure we have valid service objects and map database properties to match the frontend Service interface
+				const validServices = servicesData
+					.filter((service: any) => service && service.id && service.name && service.slug)
+					.map((service: any) => ({
+						...service,
+						// Map isActive to active
+						active: service.isActive !== undefined ? service.isActive : service.active,
+						// Map category ID or name to string category formats expected by components
+						category: service.categoryName === 'Specialist & Complex Care' || 
+								  service.categoryName === 'specialist-care' || 
+								  service.categoryName === 'Specialist Care' || 
+								  service.category === 1
+							? 'specialist-care' 
+							: 'home-care'
+					}));
+				
+				setServices(validServices);
       } catch (err) {
         console.error('Error fetching services:', err);
         setError('Failed to load services');
