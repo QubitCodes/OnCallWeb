@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import axios from '@/lib/api';
@@ -45,11 +45,25 @@ interface SearchResults {
 }
 
 const HeroSection = () => {
-  const [zipcode, setZipcode] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [selectedLocation, setSelectedLocation] = useState<any | null>(null);
   const [searchResults, setSearchResults] = useState<SearchResults | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [showResults, setShowResults] = useState(false);
+
+  const suggestionsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const clickOutside = (e: MouseEvent) => {
+      if (suggestionsRef.current && !suggestionsRef.current.contains(e.target as Node)) {
+        setSuggestions([]);
+      }
+    };
+    document.addEventListener('mousedown', clickOutside);
+    return () => document.removeEventListener('mousedown', clickOutside);
+  }, []);
 
   useEffect(() => {
     if (showResults) {
@@ -65,9 +79,120 @@ const HeroSection = () => {
     };
   }, [showResults]);
 
+  useEffect(() => {
+    if (selectedLocation) return;
+    const query = searchQuery.trim();
+    if (query.length < 2) {
+      setSuggestions([]);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      try {
+        let data: any[] = [];
+        const postcodeMatch = query.match(/^[A-Z]{1,2}[0-9][A-Z0-9]? ?[0-9][A-Z]{2}$/i);
+
+        if (postcodeMatch) {
+          const cleanQuery = query.replace(/\s+/g, '');
+          const pcRes = await fetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(cleanQuery)}`);
+          const pcData = await pcRes.json();
+
+          if (pcData.status === 200 && pcData.result) {
+            data.push({
+              place_id: `pc_${pcData.result.postcode}`,
+              lat: pcData.result.latitude.toString(),
+              lon: pcData.result.longitude.toString(),
+              display_name: `${pcData.result.postcode}, ${pcData.result.admin_district || ''}, UK`
+            });
+          } else if (pcData.status === 404 && pcData.terminated) {
+            data.push({
+              place_id: `pc_${pcData.terminated.postcode}`,
+              lat: pcData.terminated.latitude.toString(),
+              lon: pcData.terminated.longitude.toString(),
+              display_name: `${pcData.terminated.postcode} (Terminated Postcode), UK`
+            });
+          }
+        }
+
+        if (data.length === 0) {
+          const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=5`);
+          data = await response.json();
+        }
+
+        setSuggestions(data || []);
+      } catch (err) {
+        console.error('Failed to fetch suggestions:', err);
+      }
+    }, 600);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery, selectedLocation]);
+
+  const triggerAvailabilitySearch = async (lat: string | number, lon: string | number, name: string) => {
+    setIsSearching(true);
+    setSearchError(null);
+    setSearchResults(null);
+
+    try {
+      const response = await fetch(`/api/v1/services/check-availability`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          lat: parseFloat(lat.toString()),
+          lng: parseFloat(lon.toString())
+        })
+      });
+
+      const resData = await response.json();
+
+      if (response.ok && resData && resData.status) {
+        setSearchResults({
+          postcode: name,
+          data: resData.data.map((srv: any) => ({
+            id: srv.id,
+            name: srv.name,
+            description: srv.description,
+            slug: srv.slug,
+            image: srv.image || '/images/icon-care-1.svg'
+          })),
+          nearby: []
+        });
+        setShowResults(true);
+      } else {
+        // Fallback: Open popup showing "We haven't started here yet"
+        setSearchResults({
+          postcode: name,
+          data: [],
+          nearby: []
+        });
+        setShowResults(true);
+      }
+    } catch (err) {
+      console.error('Search failed:', err);
+      // Fallback: Open popup showing "We haven't started here yet"
+      setSearchResults({
+        postcode: name,
+        data: [],
+        nearby: []
+      });
+      setShowResults(true);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleSelectSuggestion = (suggestion: any) => {
+    setSelectedLocation(suggestion);
+    setSearchQuery(suggestion.display_name.split(',')[0]);
+    setSuggestions([]);
+    triggerAvailabilitySearch(suggestion.lat, suggestion.lon, suggestion.display_name);
+  };
+
   const handleSearch = async () => {
-    if (!zipcode.trim()) {
-      setSearchError('Please enter a postcode');
+    if (!searchQuery.trim()) {
+      setSearchError('Please enter a location');
       return;
     }
 
@@ -76,54 +201,59 @@ const HeroSection = () => {
     setSearchResults(null);
 
     try {
-      // Try to search for services by postcode using the existing API
-      const response = await axios.post(`${API_URL}/check-availability`, {
-        postcode: zipcode.trim().toUpperCase(),
-        includeNearby: true
-      });
+      if (selectedLocation && searchQuery.trim() === selectedLocation.display_name.split(',')[0]) {
+        await triggerAvailabilitySearch(selectedLocation.lat, selectedLocation.lon, selectedLocation.display_name);
+        return;
+      }
 
-      console.log(response.data)
-      setSearchResults(response.data);
-      setShowResults(true);
+      let data: any[] = [];
+      const postcodeMatch = searchQuery.trim().match(/^[A-Z]{1,2}[0-9][A-Z0-9]? ?[0-9][A-Z]{2}$/i);
+
+      if (postcodeMatch) {
+        const cleanQuery = searchQuery.trim().replace(/\s+/g, '');
+        const pcRes = await fetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(cleanQuery)}`);
+        const pcData = await pcRes.json();
+
+        if (pcData.status === 200 && pcData.result) {
+          data.push({
+            lat: pcData.result.latitude,
+            lon: pcData.result.longitude,
+            display_name: `${pcData.result.postcode}, UK`
+          });
+        }
+      }
+
+      if (data.length === 0) {
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchQuery)}&format=json&limit=1`);
+        data = await response.json();
+      }
+
+      if (data && data.length > 0) {
+        const match = data[0];
+        setSelectedLocation(match);
+        await triggerAvailabilitySearch(match.lat, match.lon, match.display_name);
+      } else {
+        // Fallback: Open popup showing "We haven't started here yet"
+        setSearchResults({
+          postcode: searchQuery.trim(),
+          data: [],
+          nearby: []
+        });
+        setShowResults(true);
+      }
     } catch (err) {
       console.error('Search failed:', err);
-      // Fallback to mock data if API is not available
-      // const mockResults: SearchResults = {
-      //   postcode: zipcode.trim().toUpperCase(),
-      //   services: [
-      //     {
-      //       service: {
-      //         id: 'mock1',
-      //         name: 'Domiciliary Care',
-      //         description: 'Professional care services in your home',
-      //         slug: 'domiciliary-care',
-      //         category: 'home-care',
-      //         icon: '/images/icon-care-1.svg'
-      //       },
-      //       location: { name: 'Care Center', county: 'Local Area' },
-      //       postcode: zipcode.trim().toUpperCase()
-      //     },
-      //     {
-      //       service: {
-      //         id: 'mock2',
-      //         name: 'Memory & Dementia Care',
-      //         description: 'Specialized dementia and memory care services',
-      //         slug: 'dementia-care',
-      //         category: 'specialist-care',
-      //         icon: '/images/icon-care-2.svg'
-      //       },
-      //       location: { name: 'Specialist Care Unit', county: 'Local Area' },
-      //       postcode: zipcode.trim().toUpperCase()
-      //     }
-      //   ]
-      // };
-      // setSearchResults(mockResults);
-      // setShowResults(true);
+      // Fallback: Open popup showing "We haven't started here yet"
+      setSearchResults({
+        postcode: searchQuery.trim(),
+        data: [],
+        nearby: []
+      });
+      setShowResults(true);
     } finally {
       setIsSearching(false);
     }
   };
-
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
@@ -220,7 +350,7 @@ const HeroSection = () => {
     setSearchError(null);
   };
   return (
-    <div className="hero bg-section dark-section">
+    <div className="hero bg-section dark-section" style={{ position: 'relative', zIndex: 50 }}>
       <div className="container-fluid">
         <div className="row no-gutters">
           <div className="col-lg-12">
@@ -229,7 +359,7 @@ const HeroSection = () => {
               {/* Hero Content Start */}
               <div className="hero-content">
                 {/* Hero Content Box Start */}
-                <div className="hero-content-box">
+                <div className="hero-content-box" style={{ position: 'relative', zIndex: 10 }}>
                   {/* Section Title Start */}
                   <div className="section-title">
                     {/* <h3 className="wow fadeInUp">Discover the power of premium</h3> */}
@@ -251,15 +381,64 @@ const HeroSection = () => {
 
                     {/* Search Box Start */}
                     <div className="search-box-container wow fadeInUp" data-wow-delay="0.3s" style={{ marginBottom: '20px' }}>
-                      <div className="search-box" style={searchBoxInnerStyle}>
-                        <input
-                          type="text"
-                          value={zipcode}
-                          onChange={(e) => setZipcode(e.target.value)}
-                          onKeyPress={handleKeyPress}
-                          placeholder="Enter your postcode (e.g., M1 1AA)"
-                          style={inputStyle}
-                        />
+                      <div className="search-box" style={searchBoxInnerStyle} ref={suggestionsRef}>
+                        <div style={{ position: 'relative', flex: isMobile ? 'none' : 1, width: isMobile ? '100%' : 'auto' }}>
+                          <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => {
+                              setSearchQuery(e.target.value);
+                              setSelectedLocation(null);
+                              setSearchError(null);
+                            }}
+                            onKeyPress={handleKeyPress}
+                            placeholder="Enter city or town..."
+                            style={{ ...inputStyle, width: '100%' }}
+                          />
+                          {suggestions.length > 0 && (
+                            <div
+                              style={{
+                                position: 'absolute',
+                                top: '100%',
+                                left: 0,
+                                right: 0,
+                                marginTop: '5px',
+                                backgroundColor: 'white',
+                                border: '1px solid #ddd',
+                                borderRadius: '10px',
+                                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                                zIndex: 1000,
+                                maxHeight: '200px',
+                                overflowY: 'auto'
+                              }}
+                            >
+                              {suggestions.map((suggestion, idx) => (
+                                <button
+                                  key={idx}
+                                  type="button"
+                                  onClick={() => handleSelectSuggestion(suggestion)}
+                                  style={{
+                                    width: '100%',
+                                    textAlign: 'left',
+                                    padding: '12px 16px',
+                                    backgroundColor: 'transparent',
+                                    border: 'none',
+                                    borderBottom: '1px solid #eee',
+                                    cursor: 'pointer',
+                                    outline: 'none',
+                                    transition: 'background 0.2s',
+                                    color: '#333'
+                                  }}
+                                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                >
+                                  <div style={{ fontWeight: '500', fontSize: '14px' }}>{suggestion.display_name.split(',')[0]}</div>
+                                  <div style={{ fontSize: '12px', color: '#666', marginTop: '2px', lineHeight: '1.4' }}>{suggestion.display_name}</div>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                         <button onClick={handleSearch} disabled={isSearching} style={buttonStyle}>
                           {isSearching ? 'Searching...' : 'Search Services'}
                         </button>
@@ -469,10 +648,10 @@ const HeroSection = () => {
                   onClick={(e) => e.stopPropagation()}
                 >
                   {/* STICKY HEADER AREA */}
-                  <div style={{ 
-                    padding: '25px 30px', 
-                    borderBottom: '1px solid #eee', 
-                    backgroundColor: '#fff', 
+                  <div style={{
+                    padding: '25px 30px',
+                    borderBottom: '1px solid #eee',
+                    backgroundColor: '#fff',
                     zIndex: 10,
                     flexShrink: 0,
                     display: 'flex',
@@ -514,27 +693,76 @@ const HeroSection = () => {
                     </div>
 
                     {/* Inline Search Bar */}
-                    <div style={{ display: 'flex', gap: '10px' }}>
-                      <input
-                        type="text"
-                        value={zipcode}
-                        onChange={(e) => setZipcode(e.target.value)}
-                        onKeyPress={handleKeyPress}
-                        placeholder="Change postcode (e.g., M1 1AA)"
-                        style={{
-                          flex: 1,
-                          padding: '10px 15px',
-                          border: '1px solid #ddd',
-                          borderRadius: '8px',
-                          fontSize: '15px',
-                          outline: 'none',
-                          color: '#333',
-                          backgroundColor: '#fff'
-                        }}
-                      />
-                      <button 
-                        onClick={handleSearch} 
-                        disabled={isSearching} 
+                    <div style={{ display: 'flex', gap: '10px', position: 'relative' }}>
+                      <div style={{ flex: 1, position: 'relative' }}>
+                        <input
+                          type="text"
+                          value={searchQuery}
+                          onChange={(e) => {
+                            setSearchQuery(e.target.value);
+                            setSelectedLocation(null);
+                            setSearchError(null);
+                          }}
+                          onKeyPress={handleKeyPress}
+                          placeholder="Change location..."
+                          style={{
+                            width: '100%',
+                            padding: '10px 15px',
+                            border: '1px solid #ddd',
+                            borderRadius: '8px',
+                            fontSize: '15px',
+                            outline: 'none',
+                            color: '#333',
+                            backgroundColor: '#fff'
+                          }}
+                        />
+                        {suggestions.length > 0 && (
+                          <div
+                            style={{
+                              position: 'absolute',
+                              top: '100%',
+                              left: 0,
+                              right: 0,
+                              marginTop: '5px',
+                              backgroundColor: 'white',
+                              border: '1px solid #ddd',
+                              borderRadius: '10px',
+                              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                              zIndex: 10000,
+                              maxHeight: '200px',
+                              overflowY: 'auto'
+                            }}
+                          >
+                            {suggestions.map((suggestion, idx) => (
+                              <button
+                                key={idx}
+                                type="button"
+                                onClick={() => handleSelectSuggestion(suggestion)}
+                                style={{
+                                  width: '100%',
+                                  textAlign: 'left',
+                                  padding: '12px 16px',
+                                  backgroundColor: 'transparent',
+                                  border: 'none',
+                                  borderBottom: '1px solid #eee',
+                                  cursor: 'pointer',
+                                  outline: 'none',
+                                  transition: 'background 0.2s',
+                                  color: '#333'
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                              >
+                                <div style={{ fontWeight: '500', fontSize: '14px' }}>{suggestion.display_name.split(',')[0]}</div>
+                                <div style={{ fontSize: '12px', color: '#666', marginTop: '2px', lineHeight: '1.4' }}>{suggestion.display_name}</div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <button
+                        onClick={handleSearch}
+                        disabled={isSearching}
                         style={{
                           padding: '10px 20px',
                           backgroundColor: '#46bdec',
@@ -561,170 +789,170 @@ const HeroSection = () => {
                   </div>
 
                   {/* SCROLLABLE CONTENT AREA */}
-                  <div style={{ 
-                    padding: '25px 30px', 
-                    overflowY: 'auto', 
-                    flex: 1, 
-                    backgroundColor: '#fafafa' 
+                  <div style={{
+                    padding: '25px 30px',
+                    overflowY: 'auto',
+                    flex: 1,
+                    backgroundColor: '#fafafa'
                   }}>
-                  {/* Direct Services */}
-                  {(searchResults?.data?.length ?? 0) > 0 && (
-                    <div style={{ marginBottom: '30px' }}>
-                      <h3 style={{ fontSize: '22px', fontWeight: '600', color: '#333', marginBottom: '20px' }}>
-                        Direct Services in Your Area
-                      </h3>
-                      <div className="services-grid" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px' }}>
-                        {searchResults?.data?.map((result: any, index: number) => (
-                          <div
-                            key={index}
-                            style={{
-                              border: '2px solid #46bdec',
-                              borderRadius: '15px',
-                              padding: '20px',
-                              backgroundColor: '#fff'
-                            }}
-                          >
-                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '15px' }}>
-                              {result?.image && (
-                                <Image
-                                  src={result?.image}
-                                  alt=""
-                                  width={50}
-                                  height={70}
-                                  style={{ borderRadius: '8px' }}
-                                />
-                              )}
-                              <div style={{ flex: 1 }}>
-                                <h4 style={{ fontSize: '18px', fontWeight: '600', color: '#333', marginBottom: '8px' }}>
-                                  {result?.name}
-                                </h4>
-                                {result?.description && (
-                                  <p style={{ color: '#666', fontSize: '14px', marginBottom: '12px', lineHeight: '1.4' }}>
-                                    {result?.description}
-                                  </p>
+                    {/* Direct Services */}
+                    {(searchResults?.data?.length ?? 0) > 0 && (
+                      <div style={{ marginBottom: '30px' }}>
+                        <h3 style={{ fontSize: '22px', fontWeight: '600', color: '#333', marginBottom: '20px' }}>
+                          Direct Services in Your Area
+                        </h3>
+                        <div className="services-grid" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px' }}>
+                          {searchResults?.data?.map((result: any, index: number) => (
+                            <div
+                              key={index}
+                              style={{
+                                border: '2px solid #46bdec',
+                                borderRadius: '15px',
+                                padding: '20px',
+                                backgroundColor: '#fff'
+                              }}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '15px' }}>
+                                {result?.image && (
+                                  <Image
+                                    src={result?.image}
+                                    alt=""
+                                    width={50}
+                                    height={70}
+                                    style={{ borderRadius: '8px' }}
+                                  />
                                 )}
-                                <Link
-                                  href={`/services/${result?.slug}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  style={{
-                                    display: 'inline-block',
-                                    marginTop: '12px',
-                                    padding: '8px 16px',
-                                    backgroundColor: '#46bdec',
-                                    color: 'white',
-                                    textDecoration: 'none',
-                                    borderRadius: '8px',
-                                    fontSize: '14px',
-                                    fontWeight: '500'
-                                  }}
-                                >
-                                  Learn More
-                                </Link>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Nearby Services */}
-                  {searchResults.nearby && searchResults.nearby.length > 0 && (
-                    <div>
-                      <h3 style={{ fontSize: '22px', fontWeight: '600', color: '#333', marginBottom: '20px' }}>
-                        Nearby Services
-                      </h3>
-                      <div className="services-grid" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px' }}>
-                        {searchResults.nearby.map((result, index) => (
-                          <div
-                            key={index}
-                            style={{
-                              border: '1px solid #ddd',
-                              borderRadius: '15px',
-                              padding: '20px',
-                              backgroundColor: '#f8f9fa'
-                            }}
-                          >
-                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '15px' }}>
-                              {result.service.icon && (
-                                <Image
-                                  src={result.service.icon}
-                                  alt=""
-                                  width={50}
-                                  height={50}
-                                  style={{ borderRadius: '8px' }}
-                                />
-                              )}
-                              <div style={{ flex: 1 }}>
-                                <h4 style={{ fontSize: '18px', fontWeight: '600', color: '#333', marginBottom: '8px' }}>
-                                  {result.service.name}
-                                </h4>
-                                {result.service.description && (
-                                  <p style={{ color: '#666', fontSize: '14px', marginBottom: '12px', lineHeight: '1.4' }}>
-                                    {result.service.description}
-                                  </p>
-                                )}
-                                <div style={{ fontSize: '13px', color: '#888' }}>
-                                  <div><strong>Area:</strong> {result.location.name}</div>
-                                  {result.location.county && (
-                                    <div><strong>County:</strong> {result.location.county}</div>
+                                <div style={{ flex: 1 }}>
+                                  <h4 style={{ fontSize: '18px', fontWeight: '600', color: '#333', marginBottom: '8px' }}>
+                                    {result?.name}
+                                  </h4>
+                                  {result?.description && (
+                                    <p style={{ color: '#666', fontSize: '14px', marginBottom: '12px', lineHeight: '1.4' }}>
+                                      {result?.description}
+                                    </p>
                                   )}
-                                  <div><strong>Postcode:</strong> {result.postcode}</div>
+                                  <Link
+                                    href={`/services/${result?.slug}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style={{
+                                      display: 'inline-block',
+                                      marginTop: '12px',
+                                      padding: '8px 16px',
+                                      backgroundColor: '#46bdec',
+                                      color: 'white',
+                                      textDecoration: 'none',
+                                      borderRadius: '8px',
+                                      fontSize: '14px',
+                                      fontWeight: '500'
+                                    }}
+                                  >
+                                    Learn More
+                                  </Link>
                                 </div>
-                                <Link
-                                  href={`/services/${result.service.slug}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  style={{
-                                    display: 'inline-block',
-                                    marginTop: '12px',
-                                    padding: '8px 16px',
-                                    backgroundColor: '#6c757d',
-                                    color: 'white',
-                                    textDecoration: 'none',
-                                    borderRadius: '8px',
-                                    fontSize: '14px',
-                                    fontWeight: '500'
-                                  }}
-                                >
-                                  Learn More
-                                </Link>
                               </div>
                             </div>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                  {/* No Services Found */}
-                  {((!searchResults?.data || searchResults.data.length === 0) && (!searchResults?.nearby || searchResults.nearby.length === 0)) && (
-                    <div style={{ textAlign: 'center', padding: '40px 20px' }}>
-                      <div style={{ fontSize: '48px', marginBottom: '20px' }}>🔍</div>
-                      <h3 style={{ fontSize: '20px', fontWeight: '600', color: '#333', marginBottom: '10px' }}>
-                        We haven't started here yet
-                      </h3>
-                      <p style={{ color: '#666', fontSize: '16px', marginBottom: '20px', lineHeight: '1.5' }}>
-                        We are currently expanding! We don't have services in {searchResults.postcode ? searchResults.postcode : 'your area'} right now. <br /> Contact us to let us know you're interested!
-                      </p>
-                      <Link
-                        href="/contact"
-                        style={{
-                          display: 'inline-block',
-                          padding: '12px 24px',
-                          backgroundColor: '#46bdec',
-                          color: 'white',
-                          textDecoration: 'none',
-                          borderRadius: '10px',
-                          fontSize: '16px',
-                          fontWeight: '600'
-                        }}
-                      >
-                        Contact Us
-                      </Link>
-                    </div>
-                  )}
+                    {/* Nearby Services */}
+                    {searchResults.nearby && searchResults.nearby.length > 0 && (
+                      <div>
+                        <h3 style={{ fontSize: '22px', fontWeight: '600', color: '#333', marginBottom: '20px' }}>
+                          Nearby Services
+                        </h3>
+                        <div className="services-grid" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px' }}>
+                          {searchResults.nearby.map((result, index) => (
+                            <div
+                              key={index}
+                              style={{
+                                border: '1px solid #ddd',
+                                borderRadius: '15px',
+                                padding: '20px',
+                                backgroundColor: '#f8f9fa'
+                              }}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '15px' }}>
+                                {result.service.icon && (
+                                  <Image
+                                    src={result.service.icon}
+                                    alt=""
+                                    width={50}
+                                    height={50}
+                                    style={{ borderRadius: '8px' }}
+                                  />
+                                )}
+                                <div style={{ flex: 1 }}>
+                                  <h4 style={{ fontSize: '18px', fontWeight: '600', color: '#333', marginBottom: '8px' }}>
+                                    {result.service.name}
+                                  </h4>
+                                  {result.service.description && (
+                                    <p style={{ color: '#666', fontSize: '14px', marginBottom: '12px', lineHeight: '1.4' }}>
+                                      {result.service.description}
+                                    </p>
+                                  )}
+                                  <div style={{ fontSize: '13px', color: '#888' }}>
+                                    <div><strong>Area:</strong> {result.location.name}</div>
+                                    {result.location.county && (
+                                      <div><strong>County:</strong> {result.location.county}</div>
+                                    )}
+                                    <div><strong>Postcode:</strong> {result.postcode}</div>
+                                  </div>
+                                  <Link
+                                    href={`/services/${result.service.slug}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style={{
+                                      display: 'inline-block',
+                                      marginTop: '12px',
+                                      padding: '8px 16px',
+                                      backgroundColor: '#6c757d',
+                                      color: 'white',
+                                      textDecoration: 'none',
+                                      borderRadius: '8px',
+                                      fontSize: '14px',
+                                      fontWeight: '500'
+                                    }}
+                                  >
+                                    Learn More
+                                  </Link>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* No Services Found */}
+                    {((!searchResults?.data || searchResults.data.length === 0) && (!searchResults?.nearby || searchResults.nearby.length === 0)) && (
+                      <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+                        <div style={{ fontSize: '48px', marginBottom: '20px' }}>🔍</div>
+                        <h3 style={{ fontSize: '20px', fontWeight: '600', color: '#333', marginBottom: '10px' }}>
+                          We haven't started here yet
+                        </h3>
+                        <p style={{ color: '#666', fontSize: '16px', marginBottom: '20px', lineHeight: '1.5' }}>
+                          We are currently expanding! We don't have services in {searchResults.postcode ? searchResults.postcode : 'your area'} right now. <br /> Contact us to let us know you're interested!
+                        </p>
+                        <Link
+                          href="/contact"
+                          style={{
+                            display: 'inline-block',
+                            padding: '12px 24px',
+                            backgroundColor: '#46bdec',
+                            color: 'white',
+                            textDecoration: 'none',
+                            borderRadius: '10px',
+                            fontSize: '16px',
+                            fontWeight: '600'
+                          }}
+                        >
+                          Contact Us
+                        </Link>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

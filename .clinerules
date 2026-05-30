@@ -1,0 +1,8 @@
+# Project Rules Override
+
+For this project (OnCallWeb), do NOT follow the rigid global developer guidelines/rules regarding:
+- Forced Laravel-style MVC controllers and packages (`@qubitcodes/qcrouter`, `@qubitcodes/qcreq`, `@qubitcodes/qcresp`).
+- Strict controller separations where API routes only parse and redirect.
+- Strict database conventions unless they are already present in the existing code.
+
+This project is a modification of an existing codebase. Always respect the existing architecture, files, and patterns. Keep the existing Next.js 15 (App Router) pages, layouts, and data fetch patterns.

@@ -187,8 +187,7 @@ export default function ViewServicePage({ params }: { params: Promise<{ id: stri
             <ServiceLocationSettingsForm 
               serviceId={id} 
               initialData={{
-                locationTemplateId: service.locationTemplateId,
-                customAreas: service.customAreas
+                locationTemplateId: service.locationTemplateId
               }} 
             />
           </motion.div>

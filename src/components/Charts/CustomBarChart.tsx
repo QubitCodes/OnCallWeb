@@ -11,9 +11,6 @@ interface CustomBarChartProps {
 
 const CustomBarChart: React.FC<CustomBarChartProps> = ({ series, categories, title, theme = "light" }) => {
   const maxValue = Math.max(...series, 1);
-  const chartHeight = 300;
-  const barColor = "#10B981";
-
   const containerClass = theme === "dark" ? `${styles.container} ${styles.dark}` : styles.container;
 
   return (
@@ -21,7 +18,11 @@ const CustomBarChart: React.FC<CustomBarChartProps> = ({ series, categories, tit
       <div className={styles.title}>
         <h4>{title}</h4>
       </div>
+      
+      {/* Main Chart Area */}
       <div className={styles.chartWrapper}>
+        
+        {/* Y Axis Labels */}
         <div className={styles.yAxis}>
           {[maxValue, Math.floor(maxValue * 0.75), Math.floor(maxValue * 0.5), Math.floor(maxValue * 0.25), 0].map((value, index) => (
             <div key={index} className={styles.yAxisLabel}>
@@ -29,35 +30,52 @@ const CustomBarChart: React.FC<CustomBarChartProps> = ({ series, categories, tit
             </div>
           ))}
         </div>
-        <div className={styles.chartContainer}>
+        
+        {/* Chart Content Area (Grid + Bars) */}
+        <div className={styles.chartArea}>
+          {/* Gridlines */}
           <div className={styles.gridLines}>
             {[0, 1, 2, 3, 4].map((index) => (
               <div key={index} className={styles.gridLine} />
             ))}
           </div>
+          
+          {/* Bars */}
           <div className={styles.barsContainer}>
             {series.map((value, index) => {
-              const height = maxValue > 0 ? (value / maxValue) * chartHeight : 0;
+              // Calculate percentage height
+              const heightPercent = maxValue > 0 ? (value / maxValue) * 100 : 0;
               return (
-                <div key={index} className={styles.barWrapper}>
-                  <div className={styles.barContainer}>
-                    <div
-                      className={styles.bar}
-                      style={{
-                        height: `${height}px`,
-                        backgroundColor: barColor,
-                      }}
-                    >
-                      <div className={styles.barValue}>{value}</div>
-                    </div>
-                  </div>
-                  <div className={styles.xAxisLabel}>
-                    {categories[index] || `Item ${index + 1}`}
+                <div key={index} className={styles.barColumn}>
+                  <div
+                    className={styles.bar}
+                    style={{
+                      height: `${heightPercent}%`,
+                    }}
+                  >
+                    <div className={styles.barValue}>{value}</div>
                   </div>
                 </div>
               );
             })}
           </div>
+        </div>
+      </div>
+      
+      {/* X Axis Labels (Row placed below the chart area) */}
+      <div className={styles.xAxisRow}>
+        {/* Empty space matching Y Axis width */}
+        <div className={styles.yAxisPlaceholder} />
+        
+        {/* X Labels Container matching Chart Area */}
+        <div className={styles.xAxisLabelsContainer}>
+          {categories.map((category, index) => (
+            <div key={index} className={styles.xAxisLabelWrapper}>
+              <span className={styles.xAxisLabel}>
+                {category}
+              </span>
+            </div>
+          ))}
         </div>
       </div>
     </div>

@@ -29,10 +29,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const login = async (email: string, password: string) => {
     try {
-      const response = await axios.post(`${API_URL}/login`, { email, password });
-      if (response.data && response.data.token) {
+      const response = await axios.post(`${API_URL}/auth/login`, { email, password });
+      const token = response.data?.misc?.token || response.data?.token;
+      if (response.data && token) {
         // Store token in localStorage
-        localStorage.setItem('admin_token', response.data.token);
+        localStorage.setItem('admin_token', token);
         setIsAuthenticated(true);
         await checkAuthStatus(); // Fetch user data after login
         // If middleware sent us with a redirect param, prefer that
@@ -62,7 +63,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const logout = async () => {
     try {
-      await axios.post(`${API_URL}/logout`); // Call logout API endpoint
+      await axios.post(`${API_URL}/auth/logout`); // Call logout API endpoint
     } catch (error) {
       console.error('Logout API call failed:', error);
       // Continue with logout even if API call fails
@@ -86,10 +87,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
 
       // Validate token by making API call
-      const response = await axios.get(`${API_URL}/me`);
-      if (response.status === 200) {
+      const response = await axios.get(`${API_URL}/auth/me`);
+      if (response.status === 200 && response.data?.status) {
         setIsAuthenticated(true);
-        setUser(response.data.user); // Set user data from /me response
+        setUser(response.data.data || response.data.user); // Set user data from response
       } else {
         setIsAuthenticated(false);
         setUser(null);

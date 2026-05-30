@@ -224,7 +224,14 @@ function ServicesContent() {
                   <td className="px-6 py-4 border-b border-secondary-600/10 dark:border-white/5 text-text-light dark:text-secondary-300">{service.categoryName || 'Uncategorized'}</td>
                   <td className="px-6 py-4 border-b border-secondary-600/10 dark:border-white/5 text-text-light dark:text-secondary-300">
                     {service.locationTemplateName ? (
-                      <span className="flex items-center"><MapPin className="w-3.5 h-3.5 mr-1 text-blue-500" />{service.locationTemplateName}</span>
+                      <button
+                        onClick={() => router.push(`/admin2/location-templates/${service.locationTemplateId}/edit`)}
+                        className="flex items-center text-blue-500 hover:text-blue-600 hover:underline font-medium transition-colors outline-none text-left"
+                        title="View Location Template"
+                      >
+                        <MapPin className="w-3.5 h-3.5 mr-1 flex-shrink-0" />
+                        {service.locationTemplateName}
+                      </button>
                     ) : (
                       <span className="text-secondary-400 dark:text-secondary-500 text-xs italic">Unassigned</span>
                     )}

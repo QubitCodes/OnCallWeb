@@ -45,6 +45,7 @@ export class ServiceController {
 					createdAt: services.createdAt,
 					updatedAt: services.updatedAt,
 					locationTemplateName: locationTemplates.name,
+					locationTemplateId: serviceAvailabilities.templateId,
 				})
 				.from(services)
 				.leftJoin(serviceCategories, eq(services.category, serviceCategories.id))

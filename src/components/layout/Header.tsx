@@ -58,11 +58,16 @@ const Header = () => {
   const navRef = useRef<HTMLDivElement | null>(null);
   
   // Search functionality states
-  const [zipcode, setZipcode] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [selectedLocation, setSelectedLocation] = useState<any | null>(null);
   const [searchResults, setSearchResults] = useState<SearchResults | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [showResults, setShowResults] = useState(false);
+
+  const suggestionsDesktopRef = useRef<HTMLDivElement>(null);
+  const suggestionsMobileRef = useRef<HTMLDivElement>(null);
 
   // Helpers
   const isDesktop = () => {
@@ -116,6 +121,20 @@ const Header = () => {
     };
     document.addEventListener('mousedown', onDocClick);
     return () => document.removeEventListener('mousedown', onDocClick);
+  }, []);
+
+  // Close suggestions on clicking outside
+  useEffect(() => {
+    const clickOutside = (e: MouseEvent) => {
+      if (
+        (!suggestionsDesktopRef.current || !suggestionsDesktopRef.current.contains(e.target as Node)) &&
+        (!suggestionsMobileRef.current || !suggestionsMobileRef.current.contains(e.target as Node))
+      ) {
+        setSuggestions([]);
+      }
+    };
+    document.addEventListener('mousedown', clickOutside);
+    return () => document.removeEventListener('mousedown', clickOutside);
   }, []);
   
   // Add scrollable class to mega menu content when content exceeds container height
@@ -267,31 +286,181 @@ const Header = () => {
     return pathname === href || (href !== '/' && pathname.startsWith(href));
   };
 
-  // Search handler
+  // Autocomplete debounced lookup
+  useEffect(() => {
+    if (selectedLocation) return;
+    const query = searchQuery.trim();
+    if (query.length < 2) {
+      setSuggestions([]);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      try {
+        let data: any[] = [];
+        const postcodeMatch = query.match(/^[A-Z]{1,2}[0-9][A-Z0-9]? ?[0-9][A-Z]{2}$/i);
+        
+        if (postcodeMatch) {
+          const cleanQuery = query.replace(/\s+/g, '');
+          const pcRes = await fetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(cleanQuery)}`);
+          const pcData = await pcRes.json();
+          
+          if (pcData.status === 200 && pcData.result) {
+            data.push({
+              place_id: `pc_${pcData.result.postcode}`,
+              lat: pcData.result.latitude.toString(),
+              lon: pcData.result.longitude.toString(),
+              display_name: `${pcData.result.postcode}, ${pcData.result.admin_district || ''}, UK`
+            });
+          } else if (pcData.status === 404 && pcData.terminated) {
+            data.push({
+              place_id: `pc_${pcData.terminated.postcode}`,
+              lat: pcData.terminated.latitude.toString(),
+              lon: pcData.terminated.longitude.toString(),
+              display_name: `${pcData.terminated.postcode} (Terminated Postcode), UK`
+            });
+          }
+        }
+
+        if (data.length === 0) {
+          const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=5`);
+          data = await response.json();
+        }
+
+        setSuggestions(data || []);
+      } catch (err) {
+        console.error('Failed to fetch suggestions:', err);
+      }
+    }, 600);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery, selectedLocation]);
+
+  const triggerAvailabilitySearch = async (lat: string | number, lon: string | number, name: string) => {
+    setIsSearching(true);
+    setSearchError(null);
+    setSearchResults(null);
+    setIsMenuOpen(false); // Close mobile drawer
+
+    try {
+      const response = await fetch(`/api/v1/services/check-availability`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          lat: parseFloat(lat.toString()),
+          lng: parseFloat(lon.toString())
+        })
+      });
+
+      const resData = await response.json();
+
+      if (response.ok && resData && resData.status) {
+        setSearchResults({
+          postcode: name,
+          data: resData.data.map((srv: any) => ({
+            id: srv.id,
+            name: srv.name,
+            description: srv.description,
+            slug: srv.slug,
+            image: srv.image || '/images/icon-care-1.svg'
+          })),
+          services: [],
+          nearby: []
+        });
+        setShowResults(true);
+      } else {
+        setSearchResults({
+          postcode: name,
+          data: [],
+          services: [],
+          nearby: []
+        });
+        setShowResults(true);
+      }
+    } catch (err) {
+      console.error('Search failed:', err);
+      setSearchResults({
+        postcode: name,
+        data: [],
+        services: [],
+        nearby: []
+      });
+      setShowResults(true);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleSelectSuggestion = (suggestion: any) => {
+    setSelectedLocation(suggestion);
+    setSearchQuery(suggestion.display_name.split(',')[0]);
+    setSuggestions([]);
+    triggerAvailabilitySearch(suggestion.lat, suggestion.lon, suggestion.display_name);
+  };
+
   const handleSearch = async () => {
-    if (!zipcode.trim()) {
-      setSearchError('Please enter a postcode');
+    if (!searchQuery.trim()) {
+      setSearchError('Please enter a location');
       return;
     }
 
     setIsSearching(true);
     setSearchError(null);
     setSearchResults(null);
-    
-    // Close mobile menu if open
-    setIsMenuOpen(false);
+    setIsMenuOpen(false); // Close mobile drawer
 
     try {
-      const response = await axios.post(`${API_URL}/check-availability`, {
-        postcode: zipcode.trim().toUpperCase(),
-        includeNearby: true
-      });
+      if (selectedLocation && searchQuery.trim() === selectedLocation.display_name.split(',')[0]) {
+        await triggerAvailabilitySearch(selectedLocation.lat, selectedLocation.lon, selectedLocation.display_name);
+        return;
+      }
 
-      setSearchResults(response.data);
-      setShowResults(true);
+      let data: any[] = [];
+      const postcodeMatch = searchQuery.trim().match(/^[A-Z]{1,2}[0-9][A-Z0-9]? ?[0-9][A-Z]{2}$/i);
+      
+      if (postcodeMatch) {
+        const cleanQuery = searchQuery.trim().replace(/\s+/g, '');
+        const pcRes = await fetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(cleanQuery)}`);
+        const pcData = await pcRes.json();
+        
+        if (pcData.status === 200 && pcData.result) {
+          data.push({
+            lat: pcData.result.latitude,
+            lon: pcData.result.longitude,
+            display_name: `${pcData.result.postcode}, UK`
+          });
+        }
+      }
+
+      if (data.length === 0) {
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchQuery)}&format=json&limit=1`);
+        data = await response.json();
+      }
+
+      if (data && data.length > 0) {
+        const match = data[0];
+        setSelectedLocation(match);
+        await triggerAvailabilitySearch(match.lat, match.lon, match.display_name);
+      } else {
+        setSearchResults({
+          postcode: searchQuery.trim(),
+          data: [],
+          services: [],
+          nearby: []
+        });
+        setShowResults(true);
+      }
     } catch (err) {
       console.error('Search failed:', err);
-      setSearchError('Unable to search services at this time. Please try again later.');
+      setSearchResults({
+        postcode: searchQuery.trim(),
+        data: [],
+        services: [],
+        nearby: []
+      });
+      setShowResults(true);
     } finally {
       setIsSearching(false);
     }
@@ -580,7 +749,7 @@ const Header = () => {
               {/* Search and Contact Us on the right */}
               <div className="d-flex align-items-center">
                 {/* Header Search Box - Desktop Only */}
-                <div className="header-search-box d-flex align-items-center me-3" style={{ flex: '0 0 auto', maxWidth: '320px' }}>
+                <div className="header-search-box d-flex align-items-center me-3" style={{ flex: '0 0 auto', maxWidth: '320px', position: 'relative' }} ref={suggestionsDesktopRef}>
                   <div className="search-input-wrapper" style={{ 
                     display: 'flex', 
                     gap: '8px', 
@@ -592,10 +761,14 @@ const Header = () => {
                   }}>
                     <input
                       type="text"
-                      value={zipcode}
-                      onChange={(e) => setZipcode(e.target.value)}
+                      value={searchQuery}
+                      onChange={(e) => {
+                        setSearchQuery(e.target.value);
+                        setSelectedLocation(null);
+                        setSearchError(null);
+                      }}
                       onKeyPress={handleKeyPress}
-                      placeholder="Enter postcode..."
+                      placeholder="Enter location..."
                       style={{
                         flex: 1,
                         padding: '8px 12px',
@@ -681,6 +854,49 @@ const Header = () => {
                       )}
                     </button>
                   </div>
+                  {suggestions.length > 0 && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: '100%',
+                        left: 0,
+                        right: 0,
+                        marginTop: '5px',
+                        backgroundColor: 'white',
+                        border: '1px solid #ddd',
+                        borderRadius: '10px',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                        zIndex: 1000,
+                        maxHeight: '200px',
+                        overflowY: 'auto'
+                      }}
+                    >
+                      {suggestions.map((suggestion, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => handleSelectSuggestion(suggestion)}
+                          style={{
+                            width: '100%',
+                            textAlign: 'left',
+                            padding: '12px 16px',
+                            backgroundColor: 'transparent',
+                            border: 'none',
+                            borderBottom: '1px solid #eee',
+                            cursor: 'pointer',
+                            outline: 'none',
+                            transition: 'background 0.2s',
+                            color: '#333'
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                        >
+                          <div style={{ fontWeight: '500', fontSize: '13px' }}>{suggestion.display_name.split(',')[0]}</div>
+                          <div style={{ fontSize: '11px', color: '#666', marginTop: '2px', lineHeight: '1.4' }}>{suggestion.display_name}</div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 {/* Header Search Box End */}
 
@@ -742,7 +958,7 @@ const Header = () => {
               </div>
 
               {/* Mobile Search Box */}
-              <div className="mobile-search-wrapper">
+              <div className="mobile-search-wrapper" style={{ position: 'relative' }} ref={suggestionsMobileRef}>
                 <div className="search-input-wrapper" style={{ 
                   display: 'flex', 
                   gap: '8px', 
@@ -755,10 +971,14 @@ const Header = () => {
                 }}>
                   <input
                     type="text"
-                    value={zipcode}
-                    onChange={(e) => setZipcode(e.target.value)}
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setSelectedLocation(null);
+                      setSearchError(null);
+                    }}
                     onKeyPress={handleKeyPress}
-                    placeholder="Enter postcode..."
+                    placeholder="Enter location..."
                     style={{
                       flex: 1,
                       padding: '10px 14px',
@@ -844,6 +1064,49 @@ const Header = () => {
                     )}
                   </button>
                 </div>
+                {suggestions.length > 0 && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '100%',
+                      left: 0,
+                      right: 0,
+                      marginTop: '5px',
+                      backgroundColor: 'white',
+                      border: '1px solid #ddd',
+                      borderRadius: '10px',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                      zIndex: 1000,
+                      maxHeight: '200px',
+                      overflowY: 'auto'
+                    }}
+                  >
+                    {suggestions.map((suggestion, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => handleSelectSuggestion(suggestion)}
+                        style={{
+                          width: '100%',
+                          textAlign: 'left',
+                          padding: '12px 16px',
+                          backgroundColor: 'transparent',
+                          border: 'none',
+                          borderBottom: '1px solid #eee',
+                          cursor: 'pointer',
+                          outline: 'none',
+                          transition: 'background 0.2s',
+                          color: '#333'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                      >
+                        <div style={{ fontWeight: '500', fontSize: '13px' }}>{suggestion.display_name.split(',')[0]}</div>
+                        <div style={{ fontSize: '11px', color: '#666', marginTop: '2px', lineHeight: '1.4' }}>{suggestion.display_name}</div>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Mobile Nav Menu */}
@@ -1427,10 +1690,10 @@ Rate Us                </a>
               <div style={{ textAlign: 'center', padding: '40px 20px' }}>
                 <div style={{ fontSize: '48px', marginBottom: '20px' }}>🔍</div>
                 <h3 style={{ fontSize: '20px', fontWeight: '600', color: '#333', marginBottom: '10px' }}>
-                  No services available
+                  We haven't started here yet
                 </h3>
-                <p style={{ color: '#666', fontSize: '16px', marginBottom: '20px' }}>
-                  No services are currently available for postcode {searchResults?.zipcode || searchResults?.postcode}.
+                <p style={{ color: '#666', fontSize: '16px', marginBottom: '20px', lineHeight: '1.5' }}>
+                  We are currently expanding! We don't have services in {searchResults?.postcode || 'your area'} right now. <br /> Contact us to let us know you're interested!
                 </p>
                 <Link 
                   href="/contact"

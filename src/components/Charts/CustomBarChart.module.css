@@ -4,13 +4,11 @@
   background: white;
   border-radius: 12px;
   padding: 24px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e5e7eb;
-  transition: box-shadow 0.3s ease;
-}
-
-.container:hover {
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.02);
+  border: 1px solid #f3f4f6;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .title {
@@ -18,52 +16,58 @@
 }
 
 .title h4 {
-  font-size: 18px;
-  font-weight: 600;
-  color: #1f2937;
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
   margin: 0;
 }
 
+/* Main Chart Area containing Y-axis and the plot area */
 .chartWrapper {
   display: flex;
-  align-items: flex-end;
-  gap: 16px;
-  height: 350px;
+  height: 240px; /* Fixed height for the plotting area */
+  gap: 12px;
+  position: relative;
 }
 
+/* Y Axis column */
 .yAxis {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  height: 300px;
-  padding-bottom: 30px;
+  height: 100%;
+  width: 32px;
+  flex-shrink: 0;
 }
 
 .yAxisLabel {
-  font-size: 12px;
-  font-weight: 500;
-  color: #6b7280;
+  font-size: 11px;
+  font-weight: 600;
+  color: #9ca3af;
   text-align: right;
-  min-width: 30px;
   line-height: 1;
 }
 
-.chartContainer {
+/* The plotting area containing gridlines and bars */
+.chartArea {
   flex: 1;
   position: relative;
   height: 100%;
+  border-bottom: 1.5px solid #e5e7eb;
 }
 
+/* Gridlines absolute positioned behind the bars */
 .gridLines {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  height: 300px;
+  bottom: 0;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   pointer-events: none;
+  z-index: 1;
 }
 
 .gridLine {
@@ -72,108 +76,144 @@
   width: 100%;
 }
 
+.gridLine:last-child {
+  background-color: transparent; /* Hide bottom gridline as it overlaps the border */
+}
+
+/* Bars flex container */
 .barsContainer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   display: flex;
   align-items: flex-end;
   justify-content: space-around;
-  height: 100%;
-  gap: 8px;
-  padding-bottom: 30px;
+  padding: 0 8px;
+  z-index: 2;
+  gap: 12px;
 }
 
-.barWrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+/* Individual bar column */
+.barColumn {
   flex: 1;
-  max-width: 60px;
-}
-
-.barContainer {
+  height: 100%;
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  width: 100%;
-  height: 300px;
-  position: relative;
+  max-width: 48px;
 }
 
+/* The actual bar with gradient */
 .bar {
   width: 100%;
-  max-width: 40px;
   border-radius: 6px 6px 0 0;
-  background: linear-gradient(to top, #10B981, #34D399);
-  transition: all 0.3s ease;
+  background: linear-gradient(180deg, #34d399 0%, #10b981 100%);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
   position: relative;
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
   display: flex;
-  align-items: flex-start;
   justify-content: center;
-  padding-top: 8px;
+  min-height: 4px; /* Ensure even 0 values show a tiny bar line */
 }
 
 .bar:hover {
-  transform: scaleY(1.05);
-  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
-  filter: brightness(1.1);
+  filter: brightness(1.05);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+  transform: translateY(-2px);
 }
 
+/* Hover tooltips/value label */
 .barValue {
+  position: absolute;
+  top: -26px;
   font-size: 11px;
-  font-weight: 600;
-  color: white;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  font-weight: 700;
+  color: #10b981;
+  background: #ecfdf5;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid #a7f3d0;
   opacity: 0;
-  transition: opacity 0.3s ease;
+  transform: translateY(4px);
+  transition: all 0.2s ease;
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 10;
 }
 
 .bar:hover .barValue {
   opacity: 1;
+  transform: translateY(0);
+}
+
+/* Colors for different bars for aesthetics */
+.barColumn:nth-child(2n) .bar {
+  background: linear-gradient(180deg, #60a5fa 0%, #3b82f6 100%);
+}
+.barColumn:nth-child(2n) .barValue {
+  color: #3b82f6;
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+.barColumn:nth-child(3n) .bar {
+  background: linear-gradient(180deg, #a78bfa 0%, #8b5cf6 100%);
+}
+.barColumn:nth-child(3n) .barValue {
+  color: #8b5cf6;
+  background: #f5f3ff;
+  border-color: #ddd6fe;
+}
+
+.barColumn:nth-child(4n) .bar {
+  background: linear-gradient(180deg, #fbbf24 0%, #f59e0b 100%);
+}
+.barColumn:nth-child(4n) .barValue {
+  color: #f59e0b;
+  background: #fffbeb;
+  border-color: #fde68a;
+}
+
+/* X Axis Row placing labels below the chart wrapper */
+.xAxisRow {
+  display: flex;
+  margin-top: 12px;
+  gap: 12px;
+}
+
+.yAxisPlaceholder {
+  width: 32px;
+  flex-shrink: 0;
+}
+
+.xAxisLabelsContainer {
+  flex: 1;
+  display: flex;
+  justify-content: space-around;
+  padding: 0 8px;
+  gap: 12px;
+}
+
+.xAxisLabelWrapper {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  max-width: 48px;
 }
 
 .xAxisLabel {
-  font-size: 12px;
-  font-weight: 500;
+  font-size: 11px;
+  font-weight: 600;
   color: #6b7280;
   text-align: center;
-  margin-top: 8px;
-  transform: rotate(-45deg);
-  transform-origin: center;
   white-space: nowrap;
-  min-height: 20px;
+  display: inline-block;
+  padding-top: 4px;
 }
 
-/* Alternative colors for variety */
-.bar:nth-child(2n) {
-  background: linear-gradient(to top, #3B82F6, #60A5FA);
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
-}
-
-.bar:nth-child(2n):hover {
-  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
-}
-
-.bar:nth-child(3n) {
-  background: linear-gradient(to top, #8B5CF6, #A78BFA);
-  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.2);
-}
-
-.bar:nth-child(3n):hover {
-  box-shadow: 0 4px 16px rgba(139, 92, 246, 0.3);
-}
-
-.bar:nth-child(4n) {
-  background: linear-gradient(to top, #F59E0B, #FBBF24);
-  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2);
-}
-
-.bar:nth-child(4n):hover {
-  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.3);
-}
-
-/* Dark mode support */
-/* Explicit dark theme class (apply by adding .dark to container) */
+/* Dark mode theme */
 .dark.container {
   background: #1f2937;
   border-color: #374151;
@@ -195,71 +235,29 @@
   background-color: #374151;
 }
 
-/* Responsive design */
-@media (max-width: 768px) {
-  .container {
-    padding: 16px;
-  }
+.dark .chartArea {
+  border-color: #374151;
+}
 
+.dark .barValue {
+  background: #1f2937;
+  border-color: #4b5563;
+}
+
+/* Mobile responsive styles */
+@media (max-width: 640px) {
   .chartWrapper {
-    height: 280px;
+    height: 180px;
   }
-
-  .yAxis {
-    height: 250px;
-  }
-
-  .barContainer {
-    height: 250px;
-  }
-
-  .barWrapper {
-    max-width: 50px;
-  }
-
-  .bar {
-    max-width: 30px;
-  }
-
+  
   .xAxisLabel {
     font-size: 10px;
     transform: rotate(-45deg);
-  }
-
-  .title h4 {
-    font-size: 16px;
-  }
-}
-
-@media (max-width: 480px) {
-  .chartWrapper {
-    height: 250px;
-    gap: 8px;
-  }
-
-  .yAxis {
-    height: 220px;
-  }
-
-  .barContainer {
-    height: 220px;
-  }
-
-  .barWrapper {
-    max-width: 40px;
-  }
-
-  .bar {
-    max-width: 25px;
-  }
-
-  .xAxisLabel {
-    font-size: 9px;
+    transform-origin: top center;
     margin-top: 4px;
   }
-
-  .yAxisLabel {
-    font-size: 10px;
-    min-width: 25px;
+  
+  .xAxisLabelsContainer {
+    padding-bottom: 12px; /* Add room for rotated labels */
   }
 }

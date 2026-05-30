@@ -2,49 +2,64 @@
 
 import Image from 'next/image';
 import { useState } from 'react';
-import axios from '@/lib/api';
-import { API_URL } from '@/config/api';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { contactFormSchema, ContactFormValues } from '@/schemas/contact.schema';
+import { PhoneInput } from 'react-international-phone';
+import 'react-international-phone/style.css';
+import axios from 'axios';
 
 export default function Contact() {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitMessage, setSubmitMessage] = useState('');
-  const [submitStatus, setSubmitStatus] = useState<'success' | 'error' | ''>('');
+	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [submitMessage, setSubmitMessage] = useState('');
+	const [submitStatus, setSubmitStatus] = useState<'success' | 'error' | ''>('');
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setSubmitMessage('');
-    setSubmitStatus('');
+	const {
+		register,
+		handleSubmit,
+		reset,
+		control,
+		formState: { errors },
+	} = useForm<ContactFormValues>({
+		resolver: zodResolver(contactFormSchema),
+		defaultValues: {
+			fname: '',
+			lname: '',
+			phone: '',
+			email: '',
+			message: '',
+		},
+	});
 
-    const formData = new FormData(e.currentTarget);
-    const firstName = formData.get('fname') as string;
-    const lastName = formData.get('lname') as string;
+	const onSubmit = async (data: ContactFormValues) => {
+		setIsSubmitting(true);
+		setSubmitMessage('');
+		setSubmitStatus('');
 
-    const contactData = {
-      name: `${firstName} ${lastName}`.trim(),
-      phone: formData.get('phone') as string,
-      email: formData.get('email') as string,
-      message: formData.get('message') as string,
-      serviceType: 'General Inquiry', // Default service type, can be customized
-    };
+		const contactData = {
+			name: `${data.fname} ${data.lname || ''}`.trim(),
+			phone: data.phone || null,
+			email: data.email || null,
+			message: data.message,
+			serviceType: 'General Inquiry',
+		};
 
-    try {
-      const response = await axios.post(`${API_URL}/contact`, contactData);
+		try {
+			const response = await axios.post('/api/v1/contacts', contactData);
 
-      if (response.status === 201 || response.status === 200) {
-        setSubmitStatus('success');
-        setSubmitMessage('Thank you for your message! We will get back to you soon.');
-        // Reset form
-        (e.target as HTMLFormElement).reset();
-      }
-    } catch (error) {
-      console.error('Contact form submission error:', error);
-      setSubmitStatus('error');
-      setSubmitMessage('Sorry, there was an error sending your message. Please try again.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+			if (response.status === 201 || response.status === 200) {
+				setSubmitStatus('success');
+				setSubmitMessage('Thank you for your message! We will get back to you soon.');
+				reset();
+			}
+		} catch (error) {
+			console.error('Contact form submission error:', error);
+			setSubmitStatus('error');
+			setSubmitMessage('Sorry, there was an error sending your message. Please try again.');
+		} finally {
+			setIsSubmitting(false);
+		}
+	};
   return (
     <>
       {/* Page Header Start */}
@@ -117,74 +132,97 @@ export default function Contact() {
             <div className="col-lg-7">
               {/* Book Contact Form Start */}
               <div className="contact-form wow fadeInUp" data-wow-delay="0.2s">
-                <form id="contactForm" onSubmit={handleSubmit} method="POST">
-                  <div className="row">
-                    <div className="form-group col-md-6 mb-4">
+                <form id='contactForm' onSubmit={handleSubmit(onSubmit)} method='POST'>
+                  <div className='row'>
+                    <div className='form-group col-md-6 mb-4'>
                       <input
-                        type="text"
-                        name="fname"
-                        className="form-control"
-                        id="fname"
-                        placeholder="First Name"
-                        required
+                        type='text'
+                        {...register('fname')}
+                        className={`form-control ${errors.fname ? 'is-invalid border-danger' : ''}`}
+                        id='fname'
+                        placeholder='First Name'
                         disabled={isSubmitting}
                       />
-                      <div className="help-block with-errors"></div>
+                      {errors.fname && (
+                        <div className='invalid-feedback d-block text-danger mt-1 text-sm font-medium'>
+                          {errors.fname.message}
+                        </div>
+                      )}
                     </div>
-                    <div className="form-group col-md-6 mb-4">
+                    <div className='form-group col-md-6 mb-4'>
                       <input
-                        type="text"
-                        name="lname"
-                        className="form-control"
-                        id="lname"
-                        placeholder="Last Name"
-                        required
+                        type='text'
+                        {...register('lname')}
+                        className={`form-control ${errors.lname ? 'is-invalid border-danger' : ''}`}
+                        id='lname'
+                        placeholder='Last Name'
                         disabled={isSubmitting}
                       />
-                      <div className="help-block with-errors"></div>
+                      {errors.lname && (
+                        <div className='invalid-feedback d-block text-danger mt-1 text-sm font-medium'>
+                          {errors.lname.message}
+                        </div>
+                      )}
                     </div>
-                    <div className="form-group col-md-6 mb-4">
+                    <div className='form-group col-md-6 mb-4'>
+                      <div className={`phone-input-wrapper ${errors.phone ? 'is-invalid' : ''}`}>
+                        <Controller
+                          name='phone'
+                          control={control}
+                          render={({ field: { onChange, value } }) => (
+                            <PhoneInput
+                              defaultCountry='gb'
+                              preferredCountries={['gb', 'in', 'ie', 'fr', 'de', 'es', 'it']}
+                              value={value}
+                              onChange={onChange}
+                              disabled={isSubmitting}
+                            />
+                          )}
+                        />
+                      </div>
+                      {errors.phone && (
+                        <div className='invalid-feedback d-block text-danger mt-1 text-sm font-medium'>
+                          {errors.phone.message}
+                        </div>
+                      )}
+                    </div>
+                    <div className='form-group col-md-6 mb-4'>
                       <input
-                        type="text"
-                        name="phone"
-                        className="form-control"
-                        id="phone"
-                        placeholder="Phone No."
-                        required
+                        type='email'
+                        {...register('email')}
+                        className={`form-control ${errors.email ? 'is-invalid border-danger' : ''}`}
+                        id='email'
+                        placeholder='E-mail'
                         disabled={isSubmitting}
                       />
-                      <div className="help-block with-errors"></div>
+                      {errors.email && (
+                        <div className='invalid-feedback d-block text-danger mt-1 text-sm font-medium'>
+                          {errors.email.message}
+                        </div>
+                      )}
                     </div>
-                    <div className="form-group col-md-6 mb-4">
-                      <input
-                        type="email"
-                        name="email"
-                        className="form-control"
-                        id="email"
-                        placeholder="E-mail"
-                        required
-                        disabled={isSubmitting}
-                      />
-                      <div className="help-block with-errors"></div>
-                    </div>
-                    <div className="form-group col-md-12 mb-5">
+                    <div className='form-group col-md-12 mb-5'>
                       <textarea
-                        name="message"
-                        className="form-control"
-                        id="message"
+                        {...register('message')}
+                        className={`form-control ${errors.message ? 'is-invalid border-danger' : ''}`}
+                        id='message'
                         rows={4}
-                        placeholder="Write Message..."
+                        placeholder='Write Message...'
                         disabled={isSubmitting}
                       ></textarea>
-                      <div className="help-block with-errors"></div>
+                      {errors.message && (
+                        <div className='invalid-feedback d-block text-danger mt-1 text-sm font-medium'>
+                          {errors.message.message}
+                        </div>
+                      )}
                     </div>
-                    <div className="col-md-12">
-                      <button type="submit" className="btn-default" disabled={isSubmitting}>
+                    <div className='col-md-12'>
+                      <button type='submit' className='btn-default' disabled={isSubmitting}>
                         <span>{isSubmitting ? 'Sending...' : 'Submit Message'}</span>
                       </button>
                       {submitMessage && (
                         <div
-                          id="msgSubmit"
+                          id='msgSubmit'
                           className={`h5 mt-3 ${submitStatus === 'success' ? 'text-success' : 'text-danger'}`}
                         >
                           {submitMessage}

@@ -141,8 +141,8 @@ export default function BookAppointment() {
                     </div>
 
                     <div className="form-group col-md-6 mb-4">
-                      <select name="services" className="form-control form-select" id="services" required>
-                        <option value="" disabled selected>
+                      <select name="services" className="form-control form-select" id="services" defaultValue="" required>
+                        <option value="" disabled>
                           Services
                         </option>
                         <option value="social_&_recreational_activities">Social & Recreational Activities</option>
