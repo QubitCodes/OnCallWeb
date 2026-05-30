@@ -66,8 +66,9 @@ const Header = () => {
   const [searchError, setSearchError] = useState<string | null>(null);
   const [showResults, setShowResults] = useState(false);
 
-  const suggestionsDesktopRef = useRef<HTMLDivElement>(null);
-  const suggestionsMobileRef = useRef<HTMLDivElement>(null);
+	const suggestionsDesktopRef = useRef<HTMLDivElement>(null);
+	const suggestionsMobileRef = useRef<HTMLDivElement>(null);
+	const modalSuggestionsRef = useRef<HTMLDivElement>(null);
 
   // Helpers
   const isDesktop = () => {
@@ -123,19 +124,19 @@ const Header = () => {
     return () => document.removeEventListener('mousedown', onDocClick);
   }, []);
 
-  // Close suggestions on clicking outside
-  useEffect(() => {
-    const clickOutside = (e: MouseEvent) => {
-      if (
-        (!suggestionsDesktopRef.current || !suggestionsDesktopRef.current.contains(e.target as Node)) &&
-        (!suggestionsMobileRef.current || !suggestionsMobileRef.current.contains(e.target as Node))
-      ) {
-        setSuggestions([]);
-      }
-    };
-    document.addEventListener('mousedown', clickOutside);
-    return () => document.removeEventListener('mousedown', clickOutside);
-  }, []);
+	// Close suggestions on clicking outside
+	useEffect(() => {
+		const clickOutside = (e: MouseEvent) => {
+			const isInsideDesktop = suggestionsDesktopRef.current && suggestionsDesktopRef.current.contains(e.target as Node);
+			const isInsideMobile = suggestionsMobileRef.current && suggestionsMobileRef.current.contains(e.target as Node);
+			const isInsideModal = modalSuggestionsRef.current && modalSuggestionsRef.current.contains(e.target as Node);
+			if (!isInsideDesktop && !isInsideMobile && !isInsideModal) {
+				setSuggestions([]);
+			}
+		};
+		document.addEventListener('mousedown', clickOutside);
+		return () => document.removeEventListener('mousedown', clickOutside);
+	}, []);
   
   // Add scrollable class to mega menu content when content exceeds container height
   useEffect(() => {
@@ -1391,63 +1392,277 @@ Rate Us                </a>
           }}
           onClick={closeResults}
         >
-          <div 
-            className="search-results-modal"
-            style={{
-              backgroundColor: 'white',
-              borderRadius: '20px',
-              padding: '20px',
-              maxWidth: '800px',
-              width: '100%',
-              maxHeight: '90vh',
-              overflowY: 'auto',
-              position: 'relative',
-              margin: 'auto'
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Close Button */}
-            <button
-              onClick={closeResults}
-              style={{
-                position: 'absolute',
-                top: '10px',
-                right: '15px',
-                background: 'none',
-                border: 'none',
-                fontSize: '28px',
-                cursor: 'pointer',
-                color: '#666',
-                zIndex: 1,
-                width: '40px',
-                height: '40px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderRadius: '50%',
-                transition: 'background-color 0.2s'
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.05)'}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-            >
-              ×
-            </button>
+					<div
+						className="search-results-modal"
+						style={{
+							backgroundColor: 'white',
+							borderRadius: '20px',
+							maxWidth: '800px',
+							width: '100%',
+							maxHeight: '85vh',
+							display: 'flex',
+							flexDirection: 'column',
+							position: 'relative',
+							overflow: 'hidden',
+							margin: 'auto',
+							boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
+						}}
+						onClick={(e) => e.stopPropagation()}
+					>
+						{/* Top Accent Gradient Bar */}
+						<div style={{ height: '4px', background: 'linear-gradient(90deg, #46bdec, #00d2ff)', width: '100%', flexShrink: 0 }} />
 
-            {/* Results Header */}
-            <div style={{ marginBottom: '20px', paddingRight: '40px' }}>
-              <h2 style={{ 
-                fontSize: 'clamp(20px, 5vw, 28px)', 
-                fontWeight: 'bold', 
-                color: '#333', 
-                marginBottom: '10px',
-                wordBreak: 'break-word'
-              }}>
-                Available Services for {searchResults?.zipcode || searchResults?.postcode}
-              </h2>
-              <p style={{ color: '#666', fontSize: 'clamp(14px, 3vw, 16px)' }}>
-                {(searchResults?.data?.length || 0) + (searchResults?.services?.length || 0) + (searchResults?.nearby?.length || 0)} services found in your area
-              </p>
-            </div>
+						{/* STICKY HEADER AREA */}
+						<div style={{
+							padding: '25px 30px',
+							borderBottom: '1px solid #e5e7eb',
+							backgroundColor: '#fff',
+							zIndex: 10,
+							flexShrink: 0,
+							display: 'flex',
+							flexDirection: 'column',
+							gap: '15px'
+						}}>
+							{/* Top Row: Title & Close Button */}
+							<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+								<div>
+									<div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+										<span style={{ fontSize: '11px', fontWeight: 'bold', color: '#46bdec', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+											📍 Service Coverage Check
+										</span>
+									</div>
+									<h2 style={{ fontSize: '24px', fontWeight: '800', color: '#111827', margin: '4px 0 8px 0', fontFamily: 'Satoshi, Inter, sans-serif' }}>
+										Available Services
+									</h2>
+									{((searchResults?.data?.length || 0) + (searchResults?.services?.length || 0) + (searchResults?.nearby?.length || 0)) > 0 && (
+										<div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+											<p style={{ color: '#4b5563', fontSize: '14px', margin: 0 }}>
+												{(searchResults?.data?.length || 0) + (searchResults?.services?.length || 0) + (searchResults?.nearby?.length || 0)} care services found near
+											</p>
+											<span style={{
+												display: 'inline-flex',
+												alignItems: 'center',
+												padding: '2px 10px',
+												borderRadius: '9999px',
+												backgroundColor: '#e0f2fe',
+												color: '#0369a1',
+												fontSize: '13px',
+												fontWeight: '600',
+												border: '1px solid #bae6fd'
+											}}>
+												{searchResults?.zipcode || searchResults?.postcode}
+											</span>
+										</div>
+									)}
+								</div>
+								<button
+									onClick={closeResults}
+									style={{
+										background: '#f3f4f6',
+										border: 'none',
+										fontSize: '18px',
+										cursor: 'pointer',
+										color: '#4b5563',
+										width: '36px',
+										height: '36px',
+										borderRadius: '50%',
+										display: 'flex',
+										alignItems: 'center',
+										justifyContent: 'center',
+										transition: 'all 0.2s ease',
+										flexShrink: 0
+									}}
+									onMouseEnter={(e) => {
+										e.currentTarget.style.backgroundColor = '#e5e7eb';
+										e.currentTarget.style.color = '#111827';
+										e.currentTarget.style.transform = 'scale(1.05) rotate(90deg)';
+									}}
+									onMouseLeave={(e) => {
+										e.currentTarget.style.backgroundColor = '#f3f4f6';
+										e.currentTarget.style.color = '#4b5563';
+										e.currentTarget.style.transform = 'scale(1) rotate(0deg)';
+									}}
+								>
+									✕
+								</button>
+							</div>
+
+							{/* Inline Search Bar */}
+							<div ref={modalSuggestionsRef} style={{ display: 'flex', gap: '10px', position: 'relative', width: '100%', marginTop: '5px' }}>
+								<div style={{ flex: 1, position: 'relative' }}>
+									{/* Search Icon inside Input */}
+									<div style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#9ca3af', display: 'flex', alignItems: 'center' }}>
+										<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+											<circle cx="11" cy="11" r="8"></circle>
+											<line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+										</svg>
+									</div>
+									<input
+										type="text"
+										value={searchQuery}
+										onChange={(e) => {
+											setSearchQuery(e.target.value);
+											setSelectedLocation(null);
+											setSearchError(null);
+										}}
+										onKeyPress={handleKeyPress}
+										placeholder="Change search location..."
+										style={{
+											width: '100%',
+											padding: '12px 16px 12px 42px',
+											border: '1px solid #e5e7eb',
+											borderRadius: '12px',
+											fontSize: '15px',
+											fontWeight: '500',
+											outline: 'none',
+											color: '#111827',
+											backgroundColor: '#f9fafb',
+											transition: 'all 0.2s ease',
+											boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.05)'
+										}}
+										onFocus={(e) => {
+											e.currentTarget.style.borderColor = '#46bdec';
+											e.currentTarget.style.backgroundColor = '#fff';
+											e.currentTarget.style.boxShadow = '0 0 0 3px rgba(70, 189, 236, 0.15), inset 0 1px 2px rgba(0,0,0,0.05)';
+										}}
+										onBlur={(e) => {
+											e.currentTarget.style.borderColor = '#e5e7eb';
+											e.currentTarget.style.backgroundColor = '#f9fafb';
+											e.currentTarget.style.boxShadow = 'inset 0 1px 2px rgba(0,0,0,0.05)';
+										}}
+									/>
+									{suggestions.length > 0 && (
+										<div
+											style={{
+												position: 'absolute',
+												top: '100%',
+												left: 0,
+												right: 0,
+												marginTop: '8px',
+												backgroundColor: 'white',
+												border: '1px solid #e5e7eb',
+												borderRadius: '12px',
+												boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)',
+												zIndex: 10000,
+												maxHeight: '220px',
+												overflowY: 'auto',
+												padding: '6px'
+											}}
+										>
+											{suggestions.map((suggestion, idx) => (
+												<button
+													key={idx}
+													type="button"
+													onClick={() => handleSelectSuggestion(suggestion)}
+													style={{
+														width: '100%',
+														textAlign: 'left',
+														padding: '10px 12px',
+														backgroundColor: 'transparent',
+														border: 'none',
+														borderRadius: '8px',
+														cursor: 'pointer',
+														outline: 'none',
+														transition: 'all 0.15s ease',
+														color: '#1f2937',
+														display: 'flex',
+														alignItems: 'flex-start',
+														gap: '10px',
+														marginBottom: idx === suggestions.length - 1 ? 0 : '2px'
+													}}
+													onMouseEnter={(e) => {
+														e.currentTarget.style.backgroundColor = '#f0f9ff';
+														e.currentTarget.style.color = '#0284c7';
+													}}
+													onMouseLeave={(e) => {
+														e.currentTarget.style.backgroundColor = 'transparent';
+														e.currentTarget.style.color = '#1f2937';
+													}}
+												>
+													<span style={{ fontSize: '16px', marginTop: '2px', flexShrink: 0 }}>📍</span>
+													<div style={{ flex: 1, minWidth: 0 }}>
+														<div style={{ fontWeight: '600', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+															{suggestion.display_name.split(',')[0]}
+														</div>
+														<div style={{ fontSize: '12px', color: '#6b7280', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+															{suggestion.display_name}
+														</div>
+													</div>
+												</button>
+											))}
+										</div>
+									)}
+								</div>
+								<button
+									onClick={handleSearch}
+									disabled={isSearching}
+									style={{
+										padding: '12px 24px',
+										backgroundColor: '#46bdec',
+										color: 'white',
+										border: 'none',
+										borderRadius: '12px',
+										fontSize: '15px',
+										fontWeight: '600',
+										cursor: isSearching ? 'not-allowed' : 'pointer',
+										opacity: isSearching ? 0.7 : 1,
+										whiteSpace: 'nowrap',
+										boxShadow: '0 4px 6px -1px rgba(70, 189, 236, 0.2), 0 2px 4px -1px rgba(70, 189, 236, 0.1)',
+										transition: 'all 0.2s ease',
+										display: 'flex',
+										alignItems: 'center',
+										gap: '6px'
+									}}
+									onMouseEnter={(e) => {
+										if (!isSearching) {
+											e.currentTarget.style.backgroundColor = '#37aedc';
+											e.currentTarget.style.transform = 'translateY(-1px)';
+											e.currentTarget.style.boxShadow = '0 6px 8px -1px rgba(70, 189, 236, 0.3), 0 4px 6px -1px rgba(70, 189, 236, 0.15)';
+										}
+									}}
+									onMouseLeave={(e) => {
+										e.currentTarget.style.backgroundColor = '#46bdec';
+										e.currentTarget.style.transform = 'translateY(0)';
+										e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(70, 189, 236, 0.2), 0 2px 4px -1px rgba(70, 189, 236, 0.1)';
+									}}
+								>
+									{isSearching ? (
+										<>
+											<span style={{
+												display: 'inline-block',
+												width: '14px',
+												height: '14px',
+												border: '2px solid rgba(255,255,255,0.3)',
+												borderTopColor: '#fff',
+												borderRadius: '50%',
+												animation: 'spin 1s linear infinite'
+											}} />
+											<style jsx>{`
+												@keyframes spin {
+													to { transform: rotate(360deg); }
+												}
+											`}</style>
+											<span>Checking...</span>
+										</>
+									) : 'Check Area'}
+								</button>
+							</div>
+
+							{/* Search Error inside modal */}
+							{searchError && (
+								<div style={{ color: '#d63384', fontSize: '14px', marginTop: '-5px' }}>
+									{searchError}
+								</div>
+							)}
+						</div>
+
+					{/* SCROLLABLE CONTENT AREA */}
+					<div style={{
+						padding: '25px 30px',
+						overflowY: 'auto',
+						flex: 1,
+						backgroundColor: '#fafafa'
+					}}>
 
             {/* Direct Services */}
             {searchResults?.data && searchResults.data.length > 0 && (
@@ -1714,6 +1929,7 @@ Rate Us                </a>
               </div>
             )}
           </div>
+        </div>
         </div>
       )}
       {/* Search Results Modal/Overlay End */}
