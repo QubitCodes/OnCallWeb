@@ -1,4 +1,4 @@
-import { pgTable, varchar, boolean, timestamp, text, json, integer, doublePrecision, serial } from 'drizzle-orm/pg-core';
+import { pgTable, varchar, boolean, timestamp, text, json, integer, doublePrecision, serial, index } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
 // Base columns for all tables to ensure consistency
@@ -66,7 +66,9 @@ export const locations = pgTable('x_locations', {
   updatedAt: defaultCols.updatedAt,
   deletedAt: defaultCols.deletedAt,
   deleteReason: defaultCols.deleteReason,
-});
+}, (table) => ({
+	postcodeIdx: index('loc_postcode_idx').on(table.postcode),
+}));
 
 export const locationTemplates = pgTable('location_templates', {
   id: defaultCols.id,
@@ -90,7 +92,9 @@ export const locationTemplateAreas = pgTable('location_template_areas', {
   updatedAt: defaultCols.updatedAt,
   deletedAt: defaultCols.deletedAt,
   deleteReason: defaultCols.deleteReason,
-});
+}, (table) => ({
+	templateIdIdx: index('lta_template_id_idx').on(table.templateId),
+}));
 
 export const serviceCategories = pgTable('service_categories', {
   id: serial('id').primaryKey(),
@@ -142,4 +146,8 @@ export const serviceAvailabilities = pgTable('service_availabilities', {
   updatedAt: defaultCols.updatedAt,
   deletedAt: defaultCols.deletedAt,
   deleteReason: defaultCols.deleteReason,
-});
+}, (table) => ({
+	serviceIdIdx: index('sa_service_id_idx').on(table.serviceId),
+	postcodeIdx: index('sa_postcode_idx').on(table.postcode),
+	templateIdIdx: index('sa_template_id_idx').on(table.templateId),
+}));

@@ -67,4 +67,62 @@ export class LocationController {
       return ResponseHandler.error('Failed to fetch location data', INTERNAL_CODES.EXTERNAL_SERVICE_ERROR, HTTP_STATUS.INTERNAL_SERVER_ERROR);
     }
   }
+
+	static async publicSearchNominatim(requestHelper: any) {
+		const { searchParams } = requestHelper;
+		const query = searchParams.q;
+		const viewbox = searchParams.viewbox;
+
+		if (!query) {
+			return ResponseHandler.error('Query parameter "q" is required', INTERNAL_CODES.VALIDATION_ERROR, HTTP_STATUS.BAD_REQUEST);
+		}
+
+		try {
+			let data = [];
+
+			// Check if query is a UK postcode
+			const postcodeMatch = query.match(/^[A-Z]{1,2}[0-9][A-Z0-9]? ?[0-9][A-Z]{2}$/i);
+			if (postcodeMatch) {
+				const cleanQuery = query.replace(/\s+/g, '');
+				const pcRes = await fetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(cleanQuery)}`);
+				const pcData = await pcRes.json();
+
+				if (pcData.status === 200 && pcData.result) {
+					data.push({
+						place_id: `pc_${pcData.result.postcode}`,
+						lat: pcData.result.latitude.toString(),
+						lon: pcData.result.longitude.toString(),
+						display_name: `${pcData.result.postcode}, ${pcData.result.admin_district || ''}, UK`,
+						geojson: { type: 'Point', coordinates: [pcData.result.longitude, pcData.result.latitude] }
+					});
+				} else if (pcData.status === 404 && pcData.terminated) {
+					data.push({
+						place_id: `pc_${pcData.terminated.postcode}`,
+						lat: pcData.terminated.latitude.toString(),
+						lon: pcData.terminated.longitude.toString(),
+						display_name: `${pcData.terminated.postcode} (Terminated Postcode), UK`,
+						geojson: { type: 'Point', coordinates: [pcData.terminated.longitude, pcData.terminated.latitude] }
+					});
+				}
+			}
+
+			if (data.length === 0) {
+				let nominatimUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&polygon_geojson=1&limit=10&countrycodes=gb`;
+				if (viewbox) nominatimUrl += `&viewbox=${viewbox}`;
+
+				const response = await fetch(nominatimUrl, { headers: { 'User-Agent': 'OnCallWeb/1.0' } });
+				if (!response.ok) throw new Error(`Nominatim API responded with status: ${response.status}`);
+				const results = await response.json();
+
+				// Server-side filter to prioritize and restrict UK-only locations
+				data = (results || [])
+					.filter((r: any) => r.display_name.toLowerCase().includes('united kingdom') || r.display_name.toLowerCase().includes(', uk'))
+					.slice(0, 5);
+			}
+			return ResponseHandler.success(data, 'Locations fetched successfully');
+		} catch (error: any) {
+			console.error('Error fetching from Nominatim:', error);
+			return ResponseHandler.error('Failed to fetch location data', INTERNAL_CODES.EXTERNAL_SERVICE_ERROR, HTTP_STATUS.INTERNAL_SERVER_ERROR);
+		}
+	}
 }

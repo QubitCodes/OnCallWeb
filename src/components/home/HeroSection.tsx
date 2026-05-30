@@ -92,40 +92,9 @@ const HeroSection = () => {
 
     const timer = setTimeout(async () => {
       try {
-        let data: any[] = [];
-        const postcodeMatch = query.match(/^[A-Z]{1,2}[0-9][A-Z0-9]? ?[0-9][A-Z]{2}$/i);
-
-        if (postcodeMatch) {
-          const cleanQuery = query.replace(/\s+/g, '');
-          const pcRes = await fetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(cleanQuery)}`);
-          const pcData = await pcRes.json();
-
-          if (pcData.status === 200 && pcData.result) {
-            data.push({
-              place_id: `pc_${pcData.result.postcode}`,
-              lat: pcData.result.latitude.toString(),
-              lon: pcData.result.longitude.toString(),
-              display_name: `${pcData.result.postcode}, ${pcData.result.admin_district || ''}, UK`
-            });
-          } else if (pcData.status === 404 && pcData.terminated) {
-            data.push({
-              place_id: `pc_${pcData.terminated.postcode}`,
-              lat: pcData.terminated.latitude.toString(),
-              lon: pcData.terminated.longitude.toString(),
-              display_name: `${pcData.terminated.postcode} (Terminated Postcode), UK`
-            });
-          }
-        }
-
-				if (data.length === 0) {
-					const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=10&countrycodes=gb`);
-					const results = await response.json();
-					data = (results || [])
-						.filter((r: any) => r.display_name.toLowerCase().includes('united kingdom') || r.display_name.toLowerCase().includes(', uk'))
-						.slice(0, 5);
-				}
-
-        setSuggestions(data || []);
+        const response = await fetch(`/api/v1/public/locations/search?q=${encodeURIComponent(query)}`);
+        const resData = await response.json();
+        setSuggestions(resData.data || []);
       } catch (err) {
         console.error('Failed to fetch suggestions:', err);
       }
@@ -212,30 +181,9 @@ const HeroSection = () => {
         return;
       }
 
-      let data: any[] = [];
-      const postcodeMatch = searchQuery.trim().match(/^[A-Z]{1,2}[0-9][A-Z0-9]? ?[0-9][A-Z]{2}$/i);
-
-      if (postcodeMatch) {
-        const cleanQuery = searchQuery.trim().replace(/\s+/g, '');
-        const pcRes = await fetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(cleanQuery)}`);
-        const pcData = await pcRes.json();
-
-        if (pcData.status === 200 && pcData.result) {
-          data.push({
-            lat: pcData.result.latitude,
-            lon: pcData.result.longitude,
-            display_name: `${pcData.result.postcode}, UK`
-          });
-        }
-      }
-
-			if (data.length === 0) {
-				const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchQuery)}&format=json&limit=5&countrycodes=gb`);
-				const results = await response.json();
-				data = (results || [])
-					.filter((r: any) => r.display_name.toLowerCase().includes('united kingdom') || r.display_name.toLowerCase().includes(', uk'))
-					.slice(0, 1);
-			}
+      const response = await fetch(`/api/v1/public/locations/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      const resData = await response.json();
+      const data = resData.data || [];
 
       if (data && data.length > 0) {
         const match = data[0];
