@@ -93,3 +93,11 @@ If you'd like, I can also:
 
 ---
 Updated README to reflect onCall branding and staffing/recruiting focus.
+
+## Fresh PostgreSQL installation
+
+Set DB_HOST, DB_PORT, DB_USER, DB_PASSWORD and DB_DATABASE through private configuration. Run `npm run db:migrate` to apply the complete committed migration chain. A database with existing tables but no Drizzle ledger is rejected and needs a reviewed baseline; never run the historical destructive migrations against unreviewed legacy data.
+
+For an empty installation, run `npm run db:initialize` with INITIALIZE_DATABASE exactly matching DB_DATABASE, INITIAL_ADMIN_EMAIL, INITIAL_ADMIN_NAME and a privately generated INITIAL_ADMIN_PASSWORD of at least 24 characters. The initializer never replaces an existing administrator. Remove initialization-only values afterward. It sends no messages and adds no customer or demo records.
+
+Provide a strong private JWT_SECRET before deployment. The web admin-registration endpoint requires an existing active administrator. Temporary public data-repair endpoints return 410 and cannot modify records. Production uses port 3060 with the current npm start command.

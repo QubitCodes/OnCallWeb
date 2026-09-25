@@ -47,6 +47,12 @@ export class AdminAuthController {
   }
 
   static async register(requestHelper: any) {
+    // Only an existing active administrator may create another administrator.
+    const token = JwtHelper.extractFromHeader(requestHelper.header('authorization'));
+    const identity = token ? JwtHelper.verify(token) as { id?: string; role?: string } | null : null;
+    if (!identity?.id) return ResponseHandler.error('Unauthorized', INTERNAL_CODES.AUTHENTICATION_ERROR, HTTP_STATUS.UNAUTHORIZED);
+    const [actor] = await db.select().from(admins).where(and(eq(admins.id, identity.id), isNull(admins.deletedAt))).limit(1);
+    if (!actor?.isActive || actor.role !== 'admin') return ResponseHandler.error('Forbidden', INTERNAL_CODES.AUTHENTICATION_ERROR, HTTP_STATUS.FORBIDDEN);
     const { body } = requestHelper;
 
     const validated = registerSchema.safeParse(body);

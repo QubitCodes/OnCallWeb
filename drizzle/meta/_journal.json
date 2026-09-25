@@ -43,6 +43,13 @@
       "when": 1776835612915,
       "tag": "0005_many_phil_sheldon",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1790353117207,
+      "tag": "0006_fresh_schema_alignment",
+      "breakpoints": true
     }
   ]
 }

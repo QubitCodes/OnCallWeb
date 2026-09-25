@@ -10,7 +10,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx src/db/runMigrations.ts",
     "db:copy-data": "tsx src/db/migrateData.ts",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "db:initialize": "tsx scripts/initialize.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

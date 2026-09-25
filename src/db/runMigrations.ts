@@ -1,46 +1,20 @@
+import 'dotenv/config';
 import { Pool } from 'pg';
-import fs from 'fs';
-import path from 'path';
-import * as dotenv from 'dotenv';
-dotenv.config();
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { migrate } from 'drizzle-orm/node-postgres/migrator';
 
-const runMigrations = async () => {
-  console.log('Running migrations manually to bypass CREATE SCHEMA permissions...');
-	const pool = new Pool({
-		host: process.env.DB_HOST || '127.0.0.1',
-		port: process.env.DB_PORT ? parseInt(process.env.DB_PORT) : 5432,
-		user: process.env.DB_USER,
-		password: process.env.DB_PASSWORD,
-		database: process.env.DB_DATABASE,
-	});
-
+/** Apply the complete committed chain. Legacy databases require a reviewed baseline. */
+async function main() {
+  if (!process.env.DB_HOST || !process.env.DB_USER || !process.env.DB_DATABASE)
+    throw new Error('Database configuration is incomplete.');
+  const pool = new Pool({ host: process.env.DB_HOST, port: Number(process.env.DB_PORT || 5432),
+    user: process.env.DB_USER, password: process.env.DB_PASSWORD, database: process.env.DB_DATABASE, max: 1 });
   try {
-    const sql4 = fs.readFileSync(path.join(process.cwd(), 'drizzle/0005_many_phil_sheldon.sql'), 'utf-8');
-    
-    // Split by Drizzle's statement breakpoint so pg can execute multiple commands safely
-    const statements = sql4.split('--> statement-breakpoint').map(s => s.trim()).filter(s => s.length > 0);
-    
-    for (const statement of statements) {
-      console.log(`Executing: ${statement.substring(0, 50)}...`);
-      try {
-        await pool.query(statement);
-      } catch (err: any) {
-        if (err.code === '42701') {
-          console.log('Column already exists, skipping safely...');
-        } else {
-          throw err;
-        }
-      }
-    }
-    
-    console.log('Applied 0005_many_phil_sheldon.sql');
-    console.log('Migrations completed successfully!');
-  } catch (error) {
-    console.error('Error running migrations:', error);
-    process.exit(1);
-  } finally {
-    await pool.end();
-  }
-};
-
-runMigrations();
+    const { rows } = await pool.query("SELECT to_regclass('drizzle.__drizzle_migrations') AS ledger, EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE') AS populated");
+    if (!rows[0].ledger && rows[0].populated)
+      throw new Error('Existing schema has no migration ledger; review its baseline before migrating.');
+    await migrate(drizzle(pool), { migrationsFolder: 'drizzle' });
+    console.log('Committed migrations applied successfully.');
+  } finally { await pool.end(); }
+}
+main().catch(() => { console.error('Migration failed. Review database configuration and migration baseline.'); process.exitCode = 1; });
