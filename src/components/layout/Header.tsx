@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
@@ -65,6 +66,57 @@ const Header = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [showResults, setShowResults] = useState(false);
+  const [headerHeight, setHeaderHeight] = useState(85);
+  const [isMounted, setIsMounted] = useState(false);
+
+  const updateHeaderHeight = () => {
+    if (typeof window === 'undefined') return;
+    const headerEl = document.querySelector('header.main-header .header-sticky') || 
+                     document.querySelector('header.main-header') ||
+                     document.querySelector('nav.navbar');
+    if (headerEl) {
+      const rect = headerEl.getBoundingClientRect();
+      if (rect.height > 0) {
+        const h = Math.round(rect.height);
+        setHeaderHeight(h);
+        document.documentElement.style.setProperty('--navbar-height', `${h}px`);
+      }
+    }
+  };
+
+  useEffect(() => {
+    setIsMounted(true);
+    updateHeaderHeight();
+    window.addEventListener('resize', updateHeaderHeight);
+    window.addEventListener('scroll', updateHeaderHeight, { passive: true });
+    return () => {
+      window.removeEventListener('resize', updateHeaderHeight);
+      window.removeEventListener('scroll', updateHeaderHeight);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (showResults) {
+      updateHeaderHeight();
+      document.body.style.setProperty('overflow', 'hidden', 'important');
+      document.documentElement.style.setProperty('overflow', 'hidden', 'important');
+
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          closeResults();
+        }
+      };
+      window.addEventListener('keydown', handleKeyDown);
+      return () => {
+        window.removeEventListener('keydown', handleKeyDown);
+        document.body.style.removeProperty('overflow');
+        document.documentElement.style.removeProperty('overflow');
+      };
+    } else {
+      document.body.style.removeProperty('overflow');
+      document.documentElement.style.removeProperty('overflow');
+    }
+  }, [showResults]);
 
 	const suggestionsDesktopRef = useRef<HTMLDivElement>(null);
 	const suggestionsMobileRef = useRef<HTMLDivElement>(null);
@@ -1327,21 +1379,21 @@ Rate Us                </a>
       </div>
 
       {/* Search Results Modal/Overlay Start */}
-      {showResults && searchResults && (
+      {isMounted && showResults && searchResults ? createPortal(
         <div 
           className="search-results-overlay"
           style={{
             position: 'fixed',
-            top: 0,
+            top: `${headerHeight}px`,
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            backgroundColor: 'rgba(0, 0, 0, 0.75)',
             zIndex: 99999,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '15px',
+            padding: '16px',
             overflowY: 'auto'
           }}
           onClick={closeResults}
@@ -1353,13 +1405,13 @@ Rate Us                </a>
 							borderRadius: '20px',
 							maxWidth: '800px',
 							width: '100%',
-							maxHeight: '85vh',
+							maxHeight: 'calc(100% - 20px)',
 							display: 'flex',
 							flexDirection: 'column',
 							position: 'relative',
 							overflow: 'hidden',
 							margin: 'auto',
-							boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
+							boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
 						}}
 						onClick={(e) => e.stopPropagation()}
 					>
@@ -1884,8 +1936,9 @@ Rate Us                </a>
             )}
           </div>
         </div>
-        </div>
-      )}
+        </div>,
+        document.body
+      ) : null}
       {/* Search Results Modal/Overlay End */}
 
       {/* Search Error Toast */}
