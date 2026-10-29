@@ -1,7 +1,13 @@
+import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
-export default function AdminIndex() {
-  // Redirect the root /admin path to the dashboard
-  redirect('/admin/dashboard');
-}
+export default async function AdminIndex() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get('token')?.value;
 
+  if (token) {
+    redirect('/admin/dashboard');
+  } else {
+    redirect('/admin/login');
+  }
+}
